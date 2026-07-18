@@ -1,0 +1,86 @@
+{
+  "asOf": "2026-07-18",
+  "note_freshness": "값은 각 소스의 최신 관측 기준. 스케줄 실행 시마다 새로 조회됩니다.",
+  "us": {
+    "trend": {
+      "num": 1,
+      "val": "상승 · 200일선 위",
+      "src_date": "07-17",
+      "auto": false,
+      "tone": "green",
+      "note": "S&P 7,458 > 200일선 6,987 · 우상향"
+    },
+    "cape": {
+      "num": 41.52,
+      "val": "매우 비쌈 · CAPE 41.5",
+      "src_date": "07-18",
+      "auto": true
+    },
+    "hy": {
+      "num": 271,
+      "val": "271bp · 저점권",
+      "src_date": "07-16",
+      "auto": true
+    },
+    "breadth": {
+      "num": 62,
+      "val": "건강 · 2월래 최고",
+      "src_date": "07-16",
+      "auto": true
+    },
+    "vix": {
+      "num": 16.7,
+      "val": "17 · 잠잠",
+      "src_date": "07-16",
+      "auto": true
+    }
+  },
+  "kr": {
+    "trend": {
+      "num": 1,
+      "val": "상승 추세 · 최근 급락",
+      "src_date": "07-16",
+      "auto": false,
+      "tone": "green",
+      "note": "장기 상승(YoY +160%대)이나 최근 3거래일 급락·2주래 최저"
+    },
+    "valuation": {
+      "num": 6.4,
+      "val": "싼 편이나 정점 의존",
+      "src_date": "07-10",
+      "auto": false,
+      "tone": "amber",
+      "note": "선행 PER 약 6.4배(수동/근사). 반도체 실적 정점 의존"
+    },
+    "flows": {
+      "num": -1,
+      "val": "최근 순매도 전환",
+      "src_date": "07-16",
+      "auto": false,
+      "tone": "amber",
+      "note": "라이브 소스상 외국인 순매도(-2.48조/7월, 순매도세) → Phase1 '순매수'에서 뒤집힘"
+    },
+    "fx": {
+      "num": 1487,
+      "val": "~1,487원 · 약세",
+      "src_date": "07-18",
+      "auto": true
+    },
+    "bok": {
+      "num": 2.75,
+      "val": "2.75%로 인상(긴축)",
+      "src_date": "07-16",
+      "auto": false,
+      "tone": "red",
+      "note": "3년 6개월 만 첫 인상, 긴축 전환(7/16 금통위)"
+    },
+    "vol": {
+      "num": 8,
+      "val": "±6~8% 급등락",
+      "src_date": "07-16",
+      "auto": false,
+      "tone": "red",
+      "note": "최근 -8%대 급락일·사이드카"
+    }
+  }
+}
