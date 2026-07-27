@@ -2,6 +2,7 @@ name: nightly-update
 on:
   schedule:
     - cron: '30 12 * * 0-5'   # 12:30 UTC = 21:30 KST (일~금)
+    - cron: '50 14 * * 0-5'   # backup: 14:50 UTC = 23:50 KST (GitHub schedule miss 보완)
   workflow_dispatch:
 
 jobs:
@@ -16,6 +17,20 @@ jobs:
           python3 fetch_data.py
           python3 generate.py
           cp dashboard.html index.html
+      - name: verify freshness
+        run: |
+          python3 - <<'PY'
+          import json, datetime, pathlib, sys
+          today = datetime.datetime.now(datetime.timezone.utc).astimezone(
+              datetime.timezone(datetime.timedelta(hours=9))
+          ).date().isoformat()
+          data = json.loads(pathlib.Path('data.json').read_text())
+          as_of = data.get('asOf')
+          if as_of != today:
+              print(f'freshness check failed: asOf={as_of}, today_kst={today}')
+              sys.exit(1)
+          print(f'freshness ok: asOf={as_of}')
+          PY
       - name: commit
         run: |
           git config user.name "dashboard-bot"
