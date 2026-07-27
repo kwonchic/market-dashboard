@@ -4,7 +4,7 @@
 시장 신호 대시보드 — 데이터 수집기
 - 실행: python3 fetch_data.py  ->  data.json의 자동 지표를 최신값으로 갱신
 - API 키 불필요: FRED는 공개 CSV(fredgraph.csv), 환율은 open.er-api.com, CAPE는 multpl 파싱
-- 자동 갱신 대상: us.hy, us.vix, us.cape, us.trend(SP500 200일선), kr.fx
+- 자동 갱신 대상: us.hy, us.vix, us.cape, us.real_yield, us.trend(SP500 200일선), kr.fx
 - 수동 유지: kr.valuation/flows/bok/vol, us.breadth (무료 소스 없음 → 기존값 유지, src_date로 구분)
 - 실패한 지표는 기존값을 그대로 두고 stderr에 기록 (파이프라인 전체는 계속 진행)
 """
@@ -80,6 +80,15 @@ def upd_fx(d):
                           "src_date": datetime.now(KST).strftime("%m-%d")})
     d["kr"]["fx"].pop("note", None)
 
+def upd_real_yield(d):
+    date, v = fred_series("DFII10", days=30)[-1]
+    label = "우호" if v < 1.5 else ("부담" if v <= 2.5 else "강한 부담")
+    d["us"]["real_yield"].update({
+        "num": round(v, 2),
+        "val": f"{v:.2f}% · {label}",
+        "src_date": mmdd(date),
+    })
+
 def upd_cape(d):
     html = fetch("https://www.multpl.com/shiller-pe/table/by-month", browser_ua=True)
     m = re.search(r'Current Shiller PE Ratio is ([\d.]+)', html)
@@ -96,7 +105,7 @@ def main():
         data = json.load(f)
     ok, failed = [], []
     for name, fn in [("hy", upd_hy), ("vix", upd_vix), ("trend_us", upd_trend_us),
-                     ("fx", upd_fx), ("cape", upd_cape)]:
+                     ("real_yield", upd_real_yield), ("fx", upd_fx), ("cape", upd_cape)]:
         try:
             fn(data)
             ok.append(name)

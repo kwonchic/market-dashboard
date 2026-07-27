@@ -17,7 +17,8 @@ def tone_hy(v):      return "green" if v < 300 else ("amber" if v <= 400 else "r
 def tone_vix(v):     return "green" if v < 20 else ("amber" if v <= 28 else "red")
 def tone_breadth(v): return "green" if v >= 55 else ("amber" if v >= 40 else "red")
 def tone_fx(v):      return "green" if v < 1350 else ("amber" if v <= 1520 else "red")
-AUTO_RULES = {"cape":tone_cape,"hy":tone_hy,"vix":tone_vix,"breadth":tone_breadth,"fx":tone_fx}
+def tone_real_yield(v): return "green" if v < 1.5 else ("amber" if v <= 2.5 else "red")
+AUTO_RULES = {"cape":tone_cape,"hy":tone_hy,"vix":tone_vix,"breadth":tone_breadth,"fx":tone_fx,"real_yield":tone_real_yield}
 
 # ── 2) 지표 정적 메타 ────────────────────────────────────────────────────
 META = {
@@ -37,6 +38,9 @@ META = {
   "vix":{"name":"공포지수","orig":"VIX",
     "help":"시장이 얼마나 겁먹었는지. 낮게 잠잠하다가 갑자기 튀는 '분위기 전환'이 추세 종료와 자주 겹침. 추세·신용과 같이 볼 때 전부 팔기 신호.",
     "thr":"28 초과 + 평균선 이탈 + 신용 400 초과 중 2개 → 전부 팔기","sec":"more"},
+  "real_yield":{"name":"실질금리","orig":"10Y TIPS yield (DFII10)",
+    "help":"물가를 뺀 미국 10년 금리. 높을수록 미래 이익을 현재가치로 할인하는 부담이 커져 성장주·AI·반도체 같은 고밸류 주식에 압박이 됩니다. CAPE가 높은 구간에서는 특히 같이 봐야 합니다.",
+    "thr":"1.5% 미만 우호 · 1.5~2.5% 부담 · 2.5% 초과 강한 부담","sec":"more"},
  },
  "kr": {
   "trend":{"name":"추세 (200일 평균선)","orig":"200-day moving average",
@@ -63,7 +67,7 @@ META = {
 SUPPORT = {"trend","hy","breadth","flows"}
 PRESSURE_PTS = {
  "cape":{"amber":6,"red":12},"valuation":{"amber":6,"red":12},
- "vix":{"amber":5,"red":10},"fx":{"amber":4,"red":8},
+ "vix":{"amber":5,"red":10},"real_yield":{"amber":4,"red":8},"fx":{"amber":4,"red":8},
  "bok":{"amber":3,"red":6},"vol":{"amber":4,"red":8},
  "breadth":{"amber":4,"red":8},"hy":{"amber":5,"red":10},
  "flows":{"amber":5,"red":8},"trend":{"amber":6,"red":12},
@@ -154,9 +158,9 @@ def pane_html(mkt,data):
     summary="".join(sline_html(inds[k]) for k in order)
     st=stance_of(mkt,pos)
     badge = '<div id="badgeWrap"><span class="badge">◆ 한은 기준금리 2.75% · 7/16 인상(긴축 전환)</span></div>' if mkt=="kr" else ""
-    asof=f'데이터 기준 · <b>{data["asOf"]}</b><br>갱신 · 일~금 21:30 KST · 장 시작 전'
+    asof=f'데이터 기준 · <b>{data["asOf"]}</b><br>갱신 · 일~금 21:30 KST · 23:50 백업'
     mkt_name=f'{"미국" if mkt=="us" else "국내"} 증시 · 현재 판단'
-    srcs={"us":"SRC · CAPE=multpl/Shiller · 신용(HY OAS)=FRED:BAMLH0A0HYM2 · VIX=FRED:VIXCLS · 추세/상승폭=시장데이터",
+    srcs={"us":"SRC · CAPE=multpl/Shiller · 신용(HY OAS)=FRED:BAMLH0A0HYM2 · VIX=FRED:VIXCLS · 실질금리=FRED:DFII10 · 추세/상승폭=시장데이터",
           "kr":"SRC · 기준금리=한국은행 · 환율=서울외국환중개/TradingEconomics · 외국인수급=KRX · 선행PER=근사(수동) · 변동성=시장데이터"}[mkt]
     disc={"us":"이 대시보드는 객관적 지표를 규칙에 대조해 보여주는 참고 도구이며, 재무·투자 조언이 아닙니다. 최종 판단과 책임은 이용자 본인에게 있습니다. 미터·색은 기준값 규칙 기반 자동 산출(베타)이며 가중치는 검증·튜닝 대상입니다.",
           "kr":"이 대시보드는 객관적 지표를 규칙에 대조해 보여주는 참고 도구이며, 재무·투자 조언이 아닙니다. 최종 판단과 책임은 이용자 본인에게 있습니다. 한국은 미국과 지표 구성이 다릅니다(환율·외국인 수급 비중 큼). 선행 PER 등 일부는 수동/근사값입니다."}[mkt]
