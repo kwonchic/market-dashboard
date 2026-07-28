@@ -5,21 +5,21 @@
     "trend": {
       "num": 1,
       "val": "상승 · 200일선 위",
-      "src_date": "07-24",
+      "src_date": "07-27",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,412 > 200일선 7,006 · 우상향"
+      "note": "S&P 7,413 > 200일선 7,009 · 우상향"
     },
     "cape": {
-      "num": 40.46,
+      "num": 40.47,
       "val": "매우 비쌈 · CAPE 40.5",
       "src_date": "07-28",
       "auto": true
     },
     "hy": {
-      "num": 279,
-      "val": "279bp · 저점권",
-      "src_date": "07-24",
+      "num": 281,
+      "val": "281bp · 저점권",
+      "src_date": "07-27",
       "auto": true
     },
     "breadth": {
@@ -29,15 +29,15 @@
       "auto": true
     },
     "vix": {
-      "num": 18.6,
+      "num": 18.7,
       "val": "19 · 잠잠",
-      "src_date": "07-24",
+      "src_date": "07-27",
       "auto": true
     },
     "real_yield": {
       "num": 2.43,
       "val": "2.43% · 부담",
-      "src_date": "07-23",
+      "src_date": "07-24",
       "auto": true
     }
   },
@@ -67,8 +67,8 @@
       "note": "라이브 소스상 외국인 순매도(-2.48조/7월, 순매도세) → Phase1 '순매수'에서 뒤집힘"
     },
     "fx": {
-      "num": 1460,
-      "val": "~1,460원 · 약세",
+      "num": 1467,
+      "val": "~1,467원 · 약세",
       "src_date": "07-28",
       "auto": true
     },
