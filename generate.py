@@ -158,7 +158,7 @@ def pane_html(mkt,data):
     summary="".join(sline_html(inds[k]) for k in order)
     st=stance_of(mkt,pos)
     badge = '<div id="badgeWrap"><span class="badge">◆ 한은 기준금리 2.75% · 7/16 인상(긴축 전환)</span></div>' if mkt=="kr" else ""
-    asof=f'데이터 기준 · <b>{data["asOf"]}</b><br>갱신 · 일~금 21:30 KST · 23:50 백업'
+    asof=f'데이터 기준 · <b>{data["asOf"]}</b><br>갱신 · 평일 08:30 · 16:00 · 21:30 KST · 23:50 백업'
     mkt_name=f'{"미국" if mkt=="us" else "국내"} 증시 · 현재 판단'
     srcs={"us":"SRC · CAPE=multpl/Shiller · 신용(HY OAS)=FRED:BAMLH0A0HYM2 · VIX=FRED:VIXCLS · 실질금리=FRED:DFII10 · 추세/상승폭=시장데이터",
           "kr":"SRC · 기준금리=한국은행 · 환율=서울외국환중개/TradingEconomics · 외국인수급=KRX · 선행PER=근사(수동) · 변동성=시장데이터"}[mkt]

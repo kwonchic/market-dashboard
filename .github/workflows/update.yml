@@ -1,6 +1,8 @@
 name: nightly-update
 on:
   schedule:
+    - cron: '30 23 * * 0-4'   # 23:30 UTC = 08:30 KST (월~금, 국내장 시작 전)
+    - cron: '00 07 * * 1-5'   # 07:00 UTC = 16:00 KST (월~금, 국내장 종료 후)
     - cron: '30 12 * * 0-5'   # 12:30 UTC = 21:30 KST (일~금)
     - cron: '50 14 * * 0-5'   # backup: 14:50 UTC = 23:50 KST (GitHub schedule miss 보완)
   workflow_dispatch:
