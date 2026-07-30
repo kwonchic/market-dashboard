@@ -5,14 +5,14 @@
     "trend": {
       "num": 1,
       "val": "상승 · 200일선 위",
-      "src_date": "07-28",
+      "src_date": "07-29",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,429 > 200일선 7,013 · 우상향"
+      "note": "S&P 7,316 > 200일선 7,016 · 우상향"
     },
     "cape": {
-      "num": 40.57,
-      "val": "매우 비쌈 · CAPE 40.6",
+      "num": 39.93,
+      "val": "비쌈 · CAPE 39.9",
       "src_date": "07-30",
       "auto": true
     },
@@ -35,9 +35,9 @@
       "auto": true
     },
     "real_yield": {
-      "num": 2.44,
-      "val": "2.44% · 부담",
-      "src_date": "07-27",
+      "num": 2.41,
+      "val": "2.41% · 부담",
+      "src_date": "07-28",
       "auto": true
     }
   },
