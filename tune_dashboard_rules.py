@@ -137,13 +137,13 @@ def new_score(i, W):
     # not wait for 50/200d confirmation.
     capitulation = f['dd252'] <= -0.20 and f['vix'] is not None and f['vix'] >= 30 and not (f['cape'] is not None and f['cape'] > 40)
     if capitulation:
-        return 34
+        return 14
     # bottom recovery: low에서 벗어나지만 아직 과열 전인 구간
     if f['reb63'] >= W['reb_thr'] and f['r20'] > 0 and f['vix_falling']:
         pos -= W['recovery']
     # top rollover / 고점 꺾임
     if f['dd63'] <= -W['dd63_thr'] and f['r20'] < 0 and not f['above20']:
-        pos += W['rollover']
+        pos = max(pos + W['rollover'], 84)
     if f['dd252'] <= -0.10 and not f['above50']:
         pos += W['deep_dd']
     # valuation/liquidity pressure
