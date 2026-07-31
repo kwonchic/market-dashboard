@@ -129,6 +129,17 @@ def compute_us_position(inds):
     if ct == "amber": pos += 5
     elif ct == "red": pos += 8
 
+    # 저점 신호: 추세 확인을 기다리면 2020/2022 같은 바닥을 놓친다.
+    # 252일 고점 대비 -20% 이상 + VIX 30 이상이면 공포 바닥 후보로 보고 매수권으로 강제 이동.
+    capitulation = (
+        (tr.get("dd252") or 0) <= -0.20
+        and (vix.get("num") or 0) >= 30
+        and ct != "red"
+    )
+    exit_hits = sum(1 for k in ("trend", "vix", "hy") if inds.get(k, {}).get("tone") == "red")
+    if capitulation:
+        return 34, exit_hits
+
     recovery = (
         tr.get("above50") is True
         and (tr.get("reb63") or 0) >= 0.08
@@ -149,7 +160,9 @@ def compute_us_position(inds):
         pos = max(pos, 66)
 
     exit_hits = sum(1 for k in ("trend", "vix", "hy") if inds.get(k, {}).get("tone") == "red")
-    if exit_hits >= 2:
+    # 공포 저점은 추세/VIX가 동시에 red라 기존 exit override에 덮이기 쉽다.
+    # 목적: 과거 저점 신호에서는 '매수', 시스템 리스크 중첩에서는 '전량 매도'.
+    if exit_hits >= 2 and not capitulation:
         pos = max(pos, 88)
     return max(8, min(92, round(pos))), exit_hits
 

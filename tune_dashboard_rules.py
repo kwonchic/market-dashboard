@@ -133,6 +133,11 @@ def new_score(i, W):
     if f['above50']: pos -= W['above50']
     else: pos += W['below50']
     if f['golden']: pos -= W['golden']
+    # capitulation / exact bottom signal: deep 1Y drawdown + VIX panic should be buy,
+    # not wait for 50/200d confirmation.
+    capitulation = f['dd252'] <= -0.20 and f['vix'] is not None and f['vix'] >= 30 and not (f['cape'] is not None and f['cape'] > 40)
+    if capitulation:
+        return 34
     # bottom recovery: low에서 벗어나지만 아직 과열 전인 구간
     if f['reb63'] >= W['reb_thr'] and f['r20'] > 0 and f['vix_falling']:
         pos -= W['recovery']
@@ -160,7 +165,7 @@ def new_score(i, W):
         else: pos -= W['hy_green']
     # crisis override
     exit_hits = int((not f['above200']) and f['r60']<0) + int(f['vix'] is not None and f['vix']>28) + int(f['hy_bp'] is not None and f['hy_bp']>400)
-    if exit_hits>=2: pos=max(pos,82)
+    if exit_hits>=2 and not capitulation: pos=max(pos,82)
     return max(8,min(92,round(pos)))
 
 # Target evaluation: buy should have high 6/12m returns; sell should avoid bad next 3/6m drawdowns.
@@ -191,7 +196,7 @@ def eval_W(W):
         score += 15 if got else -25
     return score,buckets
 
-base=dict(trend_up=8,trend_flat=4,below200=12,above50=5,below50=6,golden=4,reb_thr=0.08,recovery=8,dd63_thr=0.04,rollover=10,deep_dd=8,cape_red=10,cape_amber=5,real_red=6,real_amber=3,real_green=2,vix_red=10,vix_amber=4,vix_green=2,vix_falling=4,hy_red=10,hy_amber=5,hy_green=4)
+base=dict(trend_up=8,trend_flat=4,below200=12,above50=5,below50=6,golden=4,reb_thr=0.08,recovery=8,dd63_thr=0.03,rollover=10,deep_dd=8,cape_red=10,cape_amber=5,real_red=6,real_amber=3,real_green=2,vix_red=10,vix_amber=4,vix_green=2,vix_falling=4,hy_red=10,hy_amber=5,hy_green=4)
 space=[]
 for recovery in [8,12,16]:
   for rollover in [10,14,18]:
