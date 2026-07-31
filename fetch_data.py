@@ -50,27 +50,66 @@ def upd_hy(d):
     d["us"]["hy"].update({"num": bp, "val": f"{bp}bp · {label}", "src_date": mmdd(date)})
 
 def upd_vix(d):
-    date, v = fred_series("VIXCLS", days=30)[-1]
+    rows = fred_series("VIXCLS", days=60)
+    date, v = rows[-1]
+    v_prev20 = rows[-21][1] if len(rows) >= 21 else v
     label = "잠잠" if v < 20 else ("경계" if v <= 28 else "공포")
-    d["us"]["vix"].update({"num": round(v, 1), "val": f"{v:.0f} · {label}", "src_date": mmdd(date)})
+    d["us"]["vix"].update({
+        "num": round(v, 1),
+        "val": f"{v:.0f} · {label}",
+        "src_date": mmdd(date),
+        "vix_falling": v < v_prev20,
+    })
 
 def upd_trend_us(d):
     rows = fred_series("SP500", days=420)
     closes = [v for _, v in rows]
-    if len(closes) < 210:
-        raise ValueError("SP500: not enough history for 200d MA")
+    if len(closes) < 252:
+        raise ValueError("SP500: not enough history for 50/200d MA and drawdown")
+    ma20 = sum(closes[-20:]) / 20
+    ma50 = sum(closes[-50:]) / 50
     ma_now = sum(closes[-200:]) / 200
     ma_prev = sum(closes[-220:-20]) / 200  # 약 한 달 전 200일선 (기울기 판정)
     last = closes[-1]
     date = rows[-1][0]
-    if last > ma_now and ma_now > ma_prev:
-        tone, val, note = "green", "상승 · 200일선 위", f"S&P {last:,.0f} > 200일선 {ma_now:,.0f} · 우상향"
-    elif last > ma_now:
-        tone, val, note = "amber", "200일선 위 · 기울기 둔화", f"S&P {last:,.0f} > 200일선 {ma_now:,.0f} · 선 평탄/하락"
+    high63 = max(closes[-63:])
+    low63 = min(closes[-63:])
+    high252 = max(closes[-252:])
+    r20 = (last / closes[-21]) - 1
+    dd63 = (last / high63) - 1
+    reb63 = (last / low63) - 1
+    dd252 = (last / high252) - 1
+    above20 = last > ma20
+    above50 = last > ma50
+    above200 = last > ma_now
+    ma200_up = ma_now > ma_prev
+    golden = ma50 > ma_now
+    if above200 and ma200_up:
+        tone, val = "green", "상승 · 200일선 위"
+    elif above200:
+        tone, val = "amber", "200일선 위 · 기울기 둔화"
     else:
-        tone, val, note = "red", "200일선 이탈", f"S&P {last:,.0f} < 200일선 {ma_now:,.0f}"
-    d["us"]["trend"].update({"num": 1 if tone == "green" else 0, "val": val,
-                             "tone": tone, "note": note, "src_date": mmdd(date)})
+        tone, val = "red", "200일선 이탈"
+    note = (
+        f"S&P {last:,.0f} / 50일선 {ma50:,.0f} / 200일선 {ma_now:,.0f} · "
+        f"63일 고점대비 {dd63*100:.1f}% · 20일 {r20*100:.1f}%"
+    )
+    d["us"]["trend"].update({
+        "num": 1 if tone == "green" else 0,
+        "val": val,
+        "tone": tone,
+        "note": note,
+        "src_date": mmdd(date),
+        "above20": above20,
+        "above50": above50,
+        "above200": above200,
+        "ma200_up": ma200_up,
+        "golden": golden,
+        "dd63": round(dd63, 4),
+        "reb63": round(reb63, 4),
+        "dd252": round(dd252, 4),
+        "r20": round(r20, 4),
+    })
 
 def upd_fx(d):
     body = json.loads(fetch("https://open.er-api.com/v6/latest/USD"))

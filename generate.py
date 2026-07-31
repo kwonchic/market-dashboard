@@ -83,10 +83,84 @@ def resolve_tone(mkt,key,d):
     if d.get("auto") and key in AUTO_RULES: return AUTO_RULES[key](d["num"])
     return d.get("tone","gray")
 
+def compute_us_position(inds):
+    """미국장 전환점 룰 v2.
+
+    기존 룰은 200일선 확인형이라 상승 초입 매수가 늦고, 고점에서 50일선이
+    꺾이는 구간도 '보유'로 남는 문제가 있었다. v2는 두 전환 조건을 별도 반영한다.
+    - 저점 회복: 63일 저점 대비 +8% 이상, 20일 수익률 양수, VIX 하락, 50일선 회복
+    - 고점 꺾임: 50일선 이탈, 20일 수익률 음수, 63일 고점 대비 -3% 이상, 고밸류/변동성 부담
+    """
+    pos = 50.0
+    tr = inds.get("trend", {})
+    hy = inds.get("hy", {})
+    vix = inds.get("vix", {})
+    real = inds.get("real_yield", {})
+    cape = inds.get("cape", {})
+    breadth = inds.get("breadth", {})
+
+    t = tr.get("tone")
+    if t == "green": pos -= 8
+    elif t == "amber": pos += 4
+    elif t == "red": pos += 12
+
+    if tr.get("above50") is True: pos -= 7
+    elif tr.get("above50") is False: pos += 8
+    if tr.get("golden") is True: pos -= 4
+
+    for key, v in (("hy", hy), ("breadth", breadth)):
+        vt = v.get("tone")
+        if vt == "green": pos -= 4
+        pos += PRESSURE_PTS.get(key, {}).get(vt, 0)
+
+    vt = vix.get("tone")
+    if vt == "green": pos -= 2
+    elif vt == "amber": pos += 4
+    elif vt == "red": pos += 10
+    if vix.get("vix_falling") is True:
+        pos -= 4
+
+    rt = real.get("tone")
+    if rt == "green": pos -= 2
+    elif rt == "amber": pos += 4
+    elif rt == "red": pos += 8
+
+    ct = cape.get("tone")
+    if ct == "amber": pos += 5
+    elif ct == "red": pos += 8
+
+    recovery = (
+        tr.get("above50") is True
+        and (tr.get("reb63") or 0) >= 0.08
+        and (tr.get("r20") or 0) > 0
+        and vix.get("vix_falling") is True
+    )
+    if recovery:
+        pos -= 14
+
+    rollover = (
+        tr.get("above50") is False
+        and (tr.get("r20") or 0) < 0
+        and (tr.get("dd63") or 0) <= -0.03
+        and (vt in ("amber", "red") or vix.get("vix_falling") is False)
+        and ct in ("amber", "red")
+    )
+    if rollover:
+        pos = max(pos, 66)
+
+    exit_hits = sum(1 for k in ("trend", "vix", "hy") if inds.get(k, {}).get("tone") == "red")
+    if exit_hits >= 2:
+        pos = max(pos, 88)
+    return max(8, min(92, round(pos))), exit_hits
+
+
 def compute(mkt,data):
     inds={}
     for key,meta in META[mkt].items():
         d=data[mkt][key]; inds[key]={**meta,**d,"tone":resolve_tone(mkt,key,d)}
+    if mkt == "us":
+        pos, exit_hits = compute_us_position(inds)
+        return inds, pos, exit_hits
     pos=50.0
     for key,v in inds.items():
         t=v["tone"]
