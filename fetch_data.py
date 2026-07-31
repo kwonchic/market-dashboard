@@ -40,6 +40,37 @@ def fred_series(series_id, days=400):
         raise ValueError(f"{series_id}: no data")
     return rows
 
+
+def cnbc_quote(symbol):
+    """CNBC quote API. FRED가 하루 늦을 때 지수 최신값 보정용."""
+    url = (
+        "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol"
+        f"?symbols={symbol}&requestMethod=quick&output=json"
+    )
+    body = json.loads(fetch(url, browser_ua=True))
+    q = body["FormattedQuoteResult"]["FormattedQuote"][0]
+    raw_date = q.get("last_time") or q.get("last_timedate")
+    if raw_date and re.match(r"\d{4}-\d{2}-\d{2}", raw_date):
+        date = raw_date[:10]
+    else:
+        m = re.search(r"(\d{1,2})/(\d{1,2})/(\d{2})", raw_date or "")
+        if not m:
+            raise ValueError(f"CNBC {symbol}: date not found ({raw_date})")
+        mm, dd, yy = m.groups()
+        date = f"20{yy}-{int(mm):02d}-{int(dd):02d}"
+    val = float(str(q["last"]).replace(",", ""))
+    return date, val
+
+
+def append_if_newer(rows, date, val):
+    if date > rows[-1][0]:
+        return rows + [(date, val)]
+    if date == rows[-1][0]:
+        rows = rows[:]
+        rows[-1] = (date, val)
+    return rows
+
+
 def mmdd(date_str):
     return date_str[5:7] + "-" + date_str[8:10]
 
@@ -51,6 +82,10 @@ def upd_hy(d):
 
 def upd_vix(d):
     rows = fred_series("VIXCLS", days=60)
+    try:
+        rows = append_if_newer(rows, *cnbc_quote(".VIX"))
+    except Exception as e:
+        print(f"[fetch warn] vix CNBC fallback skipped: {e}", file=sys.stderr)
     date, v = rows[-1]
     v_prev20 = rows[-21][1] if len(rows) >= 21 else v
     label = "잠잠" if v < 20 else ("경계" if v <= 28 else "공포")
@@ -63,6 +98,10 @@ def upd_vix(d):
 
 def upd_trend_us(d):
     rows = fred_series("SP500", days=420)
+    try:
+        rows = append_if_newer(rows, *cnbc_quote(".SPX"))
+    except Exception as e:
+        print(f"[fetch warn] trend CNBC fallback skipped: {e}", file=sys.stderr)
     closes = [v for _, v in rows]
     if len(closes) < 252:
         raise ValueError("SP500: not enough history for 50/200d MA and drawdown")
