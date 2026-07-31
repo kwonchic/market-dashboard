@@ -193,10 +193,29 @@ def sline_html(v):
 
 def stance_of(mkt,pos):
     if mkt=="us":
-        return {"text0":"보유","text1":' · 신규는 <span class="tone-amber">조금씩</span> (주가 비쌈)',
-          "directive":"추세·신용·상승 종목 폭 모두 양호하고 <b>상승 폭이 넓어지는 중</b>(꼭대기 징후 아님). "
-                      "다만 <b>주가가 역사적으로 비싸(CAPE 42)</b> 신규는 조금씩·여유 현금 확보.",
-          "caveat":"핵심 지표 라이브 반영. 미터·색은 기준값 규칙으로 자동 산출(베타)."}
+        label, tone = band(pos)
+        if label in ("조금씩 매도", "전량 매도"):
+            text1 = ' · <span class="tone-amber">고점 꺾임 경계</span>' if label == "조금씩 매도" else ' · <span class="tone-red">위험 신호 중첩</span>'
+            directive = (
+                "추세는 아직 <b>200일선 위</b>지만, <b>50일선 이탈</b>·<b>20일 수익률 음수</b>·"
+                "<b>고점 대비 하락</b>이 겹쳤다. CAPE와 실질금리 부담도 높아 신규 매수보다 "
+                "<b>비중 축소·현금 확보</b> 쪽이 우선."
+            )
+        elif label in ("매수", "적극 매수"):
+            text1 = ' · <span class="tone-green">저점 회복 신호</span>'
+            directive = (
+                "저점 대비 반등, 50일선 회복, VIX 하락이 함께 나타난 <b>상승 전환 후보</b>. "
+                "바닥을 맞히는 신호가 아니라 확인 후 <b>분할 진입</b> 신호로 본다."
+            )
+        else:
+            text1 = ' · 신규는 <span class="tone-amber">조금씩</span> (주가 비쌈)'
+            directive = (
+                "추세·신용은 아직 무너지지 않았지만 <b>주가가 역사적으로 비싸고</b> "
+                "실질금리 부담이 남아 있다. 큰 방향은 보유, 신규는 천천히."
+            )
+        return {"text0":label.replace(" ",""),"text1":text1,
+          "directive":directive,
+          "caveat":"핵심 지표 라이브 반영. 미터·색은 전환점 룰 v2로 자동 산출(베타)."}
     return {"text0":band(pos)[0].replace(" ",""),"text1":' · <span class="tone-amber">소액·분할 방어</span>',
       "directive":"주가는 여전히 <b>싼 편</b>(선행 PER 6.4배)이나, 라이브 데이터상 <b>외국인이 순매도로 전환</b>·"
                   "<b>한은 금리 인상(2.75%)</b>·<b>원화 약세(~1,518원)</b>·<b>±6~8% 급등락</b>이 겹쳐 방어적. "
