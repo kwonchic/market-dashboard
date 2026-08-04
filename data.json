@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-08-04",
+  "asOf": "2026-08-05",
   "note_freshness": "값은 각 소스의 최신 관측 기준. 스케줄 실행 시마다 새로 조회됩니다.",
   "us": {
     "trend": {
@@ -8,21 +8,21 @@
       "src_date": "08-04",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,686 / 50일선 7,480 / 200일선 7,034 · 63일 고점대비 0.0% · 20일 2.4%",
+      "note": "S&P 7,717 / 50일선 7,480 / 200일선 7,034 · 63일 고점대비 0.0% · 20일 2.8%",
       "above20": true,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
       "dd63": 0.0,
-      "reb63": 0.0588,
+      "reb63": 0.063,
       "dd252": 0.0,
-      "r20": 0.0243
+      "r20": 0.0283
     },
     "cape": {
       "num": 41.51,
       "val": "매우 비쌈 · CAPE 41.5",
-      "src_date": "08-04",
+      "src_date": "08-05",
       "auto": true
     },
     "hy": {
@@ -38,11 +38,11 @@
       "auto": true
     },
     "vix": {
-      "num": 15.9,
+      "num": 16.2,
       "val": "16 · 잠잠",
       "src_date": "08-04",
       "auto": true,
-      "vix_falling": true
+      "vix_falling": false
     },
     "real_yield": {
       "num": 2.47,
@@ -79,7 +79,7 @@
     "fx": {
       "num": 1430,
       "val": "~1,430원 · 약세",
-      "src_date": "08-04",
+      "src_date": "08-05",
       "auto": true
     },
     "bok": {
