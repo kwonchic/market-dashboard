@@ -38,11 +38,11 @@
       "auto": true
     },
     "vix": {
-      "num": 14.9,
+      "num": 15.5,
       "val": "15 · 잠잠",
-      "src_date": "08-07",
+      "src_date": "08-10",
       "auto": true,
-      "vix_falling": true
+      "vix_falling": false
     },
     "real_yield": {
       "num": 2.43,
@@ -83,12 +83,11 @@
       "note": "외국인 5일 -4.80조 · 20일 -3.44조 · 기관 5일 +0.17조"
     },
     "fx": {
-      "num": 1420,
-      "val": "~1,420원 · 약세",
+      "num": 1410,
+      "val": "~1,410원 · 약세",
       "src_date": "08-10",
       "auto": true,
-      "tone": "amber",
-      "note": "validFrom 2026-08-10T16:10:23.000+09:00"
+      "tone": "amber"
     },
     "bok": {
       "num": 2.75,
