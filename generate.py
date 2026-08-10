@@ -204,7 +204,7 @@ def sline_html(v):
     return (f'<div class="sline"><b>{nm}</b> — <span class="{cls}">{v["val"]}</span>. '
             f'<span class="th">{v["thr"]}</span></div>')
 
-def stance_of(mkt,pos):
+def stance_of(mkt,pos,data=None):
     if mkt=="us":
         label, tone = band(pos)
         if label in ("조금씩 매도", "전량 매도"):
@@ -229,9 +229,15 @@ def stance_of(mkt,pos):
         return {"text0":label.replace(" ",""),"text1":text1,
           "directive":directive,
           "caveat":"핵심 지표 라이브 반영. 미터·색은 전환점 룰 v2로 자동 산출(베타)."}
+    kr=data.get("kr", {}) if isinstance(data,dict) else {}
+    flows=kr.get("flows",{}).get("val","외국인 수급 경고")
+    fx=kr.get("fx",{}).get("val","원화 약세")
+    vol=kr.get("vol",{}).get("val","변동성 확대")
+    pbr=kr.get("samsung_pbr",{})
+    pbr_txt=f" · 삼성전자 PBR {pbr.get('num'):.2f}배" if isinstance(pbr.get("num"), (int,float)) else ""
     return {"text0":band(pos)[0].replace(" ",""),"text1":' · <span class="tone-amber">소액·분할 방어</span>',
-      "directive":"주가는 여전히 <b>싼 편</b>(선행 PER 6.4배)이나, 라이브 데이터상 <b>외국인이 순매도로 전환</b>·"
-                  "<b>한은 금리 인상(2.75%)</b>·<b>원화 약세(~1,518원)</b>·<b>±6~8% 급등락</b>이 겹쳐 방어적. "
+      "directive":f"주가는 여전히 <b>싼 편</b>(선행 PER 6.4배)이나, 토스증권 실측상 <b>{flows}</b>·"
+                  f"<b>한은 금리 인상(2.75%)</b>·<b>{fx}</b>·<b>{vol}</b>이 겹쳐 방어적{pbr_txt}. "
                   "추세는 아직 안 깨졌으니 전량 청산이 아니라 <b>비중 축소·소액 분할</b>.",
       "caveat":"미터·색은 기준값 규칙으로 자동 산출(베타). 가중치는 튜닝 대상."}
 
@@ -262,12 +268,19 @@ def pane_html(mkt,data):
     core="".join(row_html(inds[k]) for k in order if inds[k]["sec"]=="core")
     more="".join(row_html(inds[k]) for k in order if inds[k]["sec"]=="more")
     summary="".join(sline_html(inds[k]) for k in order)
-    st=stance_of(mkt,pos)
-    badge = '<div id="badgeWrap"><span class="badge">◆ 한은 기준금리 2.75% · 7/16 인상(긴축 전환)</span></div>' if mkt=="kr" else ""
+    st=stance_of(mkt,pos,data)
+    badge = ""
+    if mkt=="kr":
+        pbr=data.get("kr",{}).get("samsung_pbr",{})
+        pbr_badge=""
+        if isinstance(pbr.get("num"), (int,float)):
+            pbr_badge=(f'<span class="badge pbr-badge">◆ 삼성전자 PBR {pbr["num"]:.2f}배 · '
+                       f'PBR≤1.0 강매수 기준 · {pbr.get("source","Valueline")} {pbr.get("src_date","")}</span>')
+        badge = '<div id="badgeWrap"><span class="badge">◆ 한은 기준금리 2.75% · 7/16 인상(긴축 전환)</span>'+pbr_badge+'</div>'
     asof=f'데이터 기준 · <b>{data["asOf"]}</b><br>갱신 · 평일 08:30 · 16:00 · 21:30 KST · 23:50 백업'
     mkt_name=f'{"미국" if mkt=="us" else "국내"} 증시 · 현재 판단'
     srcs={"us":"SRC · CAPE=multpl/Shiller · 신용(HY OAS)=FRED:BAMLH0A0HYM2 · VIX=FRED:VIXCLS · 실질금리=FRED:DFII10 · 추세/상승폭=시장데이터",
-          "kr":"SRC · 기준금리=한국은행 · 환율=서울외국환중개/TradingEconomics · 외국인수급=KRX · 선행PER=근사(수동) · 변동성=시장데이터"}[mkt]
+          "kr":"SRC · 국내 가격/수급/환율/변동성=토스증권 Open API · 삼성전자 PBR=Valueline · 기준금리=한국은행 · 선행PER=근사(수동)"}[mkt]
     disc={"us":"이 대시보드는 객관적 지표를 규칙에 대조해 보여주는 참고 도구이며, 재무·투자 조언이 아닙니다. 최종 판단과 책임은 이용자 본인에게 있습니다. 미터·색은 기준값 규칙 기반 자동 산출(베타)이며 가중치는 검증·튜닝 대상입니다.",
           "kr":"이 대시보드는 객관적 지표를 규칙에 대조해 보여주는 참고 도구이며, 재무·투자 조언이 아닙니다. 최종 판단과 책임은 이용자 본인에게 있습니다. 한국은 미국과 지표 구성이 다릅니다(환율·외국인 수급 비중 큼). 선행 PER 등 일부는 수동/근사값입니다."}[mkt]
     return f'''<section class="pane pane-{mkt}">
@@ -321,6 +334,7 @@ PAGE = '''<!DOCTYPE html>
   .hero .asof{font-family:var(--mono);font-size:11.5px;color:var(--dim);text-align:right}.hero .asof b{color:var(--mid);font-weight:500}
   .badge{display:inline-block;margin-top:10px;font-size:11.5px;font-family:var(--mono);color:var(--amber);
     background:rgba(217,164,65,.1);border:1px solid rgba(217,164,65,.3);border-radius:6px;padding:4px 9px}
+  .badge + .badge{margin-left:6px}.pbr-badge{color:var(--steel);background:rgba(95,168,196,.1);border-color:rgba(95,168,196,.35)}
   .stance-label{font-family:var(--disp);font-weight:700;font-size:29px;letter-spacing:-.01em;line-height:1.1;margin:12px 0 4px}
   .stance-label .tone-amber{color:var(--amber)}.stance-label .tone-green{color:var(--green)}.stance-label .tone-red{color:var(--red)}
   .stance-directive{font-size:14.5px;color:var(--mid);margin-bottom:20px}.stance-directive b{color:var(--hi);font-weight:600}

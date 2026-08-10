@@ -10,6 +10,7 @@
 """
 import json
 import os
+import re
 import statistics
 import sys
 import time
@@ -239,6 +240,40 @@ def compute_ranking(client):
     }
 
 
+def fetch_samsung_pbr():
+    """Valueline 투자지표 페이지에서 삼성전자 현재 PBR을 읽는다.
+
+    Toss Open API는 PBR을 제공하지 않으므로 가격/수급은 Toss, PBR은
+    출처를 명시한 외부 투자지표로만 표시한다. 실패하면 기존값을 유지한다.
+    """
+    url = "https://www.valueline.co.kr/finance/investment/005930"
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+    r.raise_for_status()
+    text = r.text
+    date_match = re.search(r"기준\s*[:：]\s*(\d{2}/\d{2})", text)
+    pbr_match = re.search(r"<dt>\s*PBR\s*</dt>\s*<dd>\s*([0-9]+(?:\.[0-9]+)?)\s*배\s*</dd>", text, re.S)
+    if not pbr_match:
+        pbr_match = re.search(r"PBR\s*([0-9]+(?:\.[0-9]+)?)\s*배", text)
+    if not pbr_match:
+        pbr_match = re.search(r"PBR[^0-9]{0,80}([0-9]+(?:\.[0-9]+)?)", text, re.S)
+    if not pbr_match:
+        raise ValueError("samsung_pbr_not_found")
+    pbr = float(pbr_match.group(1))
+    src_date = date_match.group(1).replace("/", "-") if date_match else datetime.now(KST).strftime("%m-%d")
+    tone = "green" if pbr <= 1.0 else ("amber" if pbr <= 1.5 else "red")
+    gap = ((pbr / 1.0) - 1) * 100
+    return {
+        "num": round(pbr, 2),
+        "val": f"삼성전자 PBR {pbr:.2f}배",
+        "src_date": src_date,
+        "auto": True,
+        "tone": tone,
+        "source": "Valueline",
+        "threshold": 1.0,
+        "note": f"사용자 기준: PBR 1.0 이하 강매수. 현재는 기준보다 {gap:.0f}% 높음.",
+    }
+
+
 def main():
     client = TossClient()
     path = os.path.join(HERE, "data.json")
@@ -278,8 +313,14 @@ def main():
     except Exception as e:
         failed.append(f"kr.ranking: {e}")
 
+    try:
+        data["kr"]["samsung_pbr"] = fetch_samsung_pbr()
+        ok.append("kr.samsung_pbr")
+    except Exception as e:
+        failed.append(f"kr.samsung_pbr: {e}")
+
     data["asOf"] = datetime.now(KST).strftime("%Y-%m-%d")
-    data["note_freshness"] = "값은 각 소스의 최신 관측 기준(국내는 토스증권 Open API 시장데이터). 스케줄 실행 시마다 새로 조회됩니다."
+    data["note_freshness"] = "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline). 스케줄 실행 시마다 새로 조회됩니다."
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
