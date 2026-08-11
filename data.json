@@ -38,9 +38,9 @@
       "auto": true
     },
     "vix": {
-      "num": 15.5,
+      "num": 15.4,
       "val": "15 · 잠잠",
-      "src_date": "08-10",
+      "src_date": "08-11",
       "auto": true,
       "vix_falling": true
     },
@@ -83,12 +83,11 @@
       "note": "외국인 5일 -3.91조 · 20일 -1.51조 · 기관 5일 +0.81조"
     },
     "fx": {
-      "num": 1418,
-      "val": "~1,418원 · 약세",
+      "num": 1417,
+      "val": "~1,417원 · 약세",
       "src_date": "08-11",
       "auto": true,
-      "tone": "amber",
-      "note": "validFrom 2026-08-11T16:04:43.000+09:00"
+      "tone": "amber"
     },
     "bok": {
       "num": 2.75,
