@@ -38,7 +38,7 @@
       "auto": true
     },
     "vix": {
-      "num": 15.9,
+      "num": 15.8,
       "val": "16 · 잠잠",
       "src_date": "08-18",
       "auto": true,
@@ -87,8 +87,7 @@
       "val": "~1,414원 · 약세",
       "src_date": "08-18",
       "auto": true,
-      "tone": "amber",
-      "note": "validFrom 2026-08-18T21:34:59.000+09:00"
+      "tone": "amber"
     },
     "bok": {
       "num": 2.75,
