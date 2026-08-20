@@ -8,20 +8,20 @@
       "src_date": "08-20",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,684 / 50일선 7,534 / 200일선 7,092 · 63일 고점대비 -1.5% · 20일 3.7%",
+      "note": "S&P 7,641 / 50일선 7,533 / 200일선 7,092 · 63일 고점대비 -2.0% · 20일 3.1%",
       "above20": true,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0147,
-      "reb63": 0.0574,
-      "dd252": -0.0147,
-      "r20": 0.0372
+      "dd63": -0.0202,
+      "reb63": 0.0515,
+      "dd252": -0.0202,
+      "r20": 0.0314
     },
     "cape": {
-      "num": 42.15,
-      "val": "매우 비쌈 · CAPE 42.1",
+      "num": 41.79,
+      "val": "매우 비쌈 · CAPE 41.8",
       "src_date": "08-21",
       "auto": true
     },
@@ -38,16 +38,16 @@
       "auto": true
     },
     "vix": {
-      "num": 15.7,
+      "num": 16.0,
       "val": "16 · 잠잠",
       "src_date": "08-20",
       "auto": true,
       "vix_falling": true
     },
     "real_yield": {
-      "num": 2.41,
-      "val": "2.41% · 부담",
-      "src_date": "08-18",
+      "num": 2.35,
+      "val": "2.35% · 부담",
+      "src_date": "08-19",
       "auto": true
     }
   },
@@ -87,8 +87,7 @@
       "val": "~1,391원 · 약세",
       "src_date": "08-21",
       "auto": true,
-      "tone": "amber",
-      "note": "validFrom 2026-08-21T08:34:31.000+09:00"
+      "tone": "amber"
     },
     "bok": {
       "num": 2.75,
