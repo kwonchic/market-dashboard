@@ -262,13 +262,13 @@ def meter_html(pos):
     return (f'<div class="meter-track"><div class="meter-marker" style="left:{pos}%"></div></div>'
             f'<div class="meter-scale">{spans}</div>')
 
-def pm_guardian_html(mkt, inds, pos, exit_hits, data):
-    """LLM/PM 감시자 관점의 읽기 전용 리스크 메모.
+def pm_guardian_html(mkt, inds, pos, exit_hits, data, st):
+    """기본 판단을 덮지 않는 판단 보정 메모.
 
-    Notion "오픈소스 헤지펀드 스택" 교훈 반영:
-    - LLM은 주문자가 아니라 감독자다.
-    - 예측값보다 확신도/충돌/신선도를 본다.
-    - 확신도 낮으면 행동 지시가 아니라 관찰/보수화 메모를 낸다.
+    목적:
+    - 새 매수/매도 판단을 추가하지 않는다.
+    - 기본 신호를 어떻게 덜 과신할지 한 문장으로 보정한다.
+    - 지표 충돌과 오래된 지표만 보조로 보여준다.
     """
     tones = {k: v.get("tone", "gray") for k, v in inds.items()}
     red = [inds[k]["name"].split(" (")[0] for k, t in tones.items() if t == "red"]
@@ -299,16 +299,33 @@ def pm_guardian_html(mkt, inds, pos, exit_hits, data):
         if tones.get("flows") in ("amber", "red") and tones.get("fx") in ("amber", "red"):
             conflict.append("외국인 수급과 환율이 동시에 부담")
 
-    score = 0
-    score += len(red) * 2 + len(amber)
-    score += len(conflict) * 2 + len(stale)
-    score += 2 if exit_hits >= 2 else 0
+    score = len(red) * 2 + len(amber) + len(conflict) * 2 + len(stale) + (2 if exit_hits >= 2 else 0)
     if score >= 8:
-        confidence, cls = "낮음", "red"
+        caution, cls = "과신 금지", "red"
     elif score >= 4:
-        confidence, cls = "중간", "amber"
+        caution, cls = "보정 필요", "amber"
     else:
-        confidence, cls = "높음", "green"
+        caution, cls = "해석 유지", "green"
+
+    base_signal = st["text0"]
+    if mkt == "us":
+        if base_signal in ("매수", "적극매수"):
+            final_read = "적립은 유지하되, 신규 매수는 작게 나눠서 본다."
+        elif base_signal == "보유":
+            final_read = "방향을 새로 정하기보다 기존 비중을 유지하고 다음 갱신을 본다."
+        elif base_signal == "조금씩매도":
+            final_read = "전량 청산 신호는 아니며, 과열 부담만 일부 줄인다."
+        else:
+            final_read = "위험 신호가 겹친 구간이라 방어를 우선한다."
+    else:
+        if base_signal in ("매수", "적극매수"):
+            final_read = "싸 보이더라도 환율·수급을 확인하며 소액 분할만 본다."
+        elif base_signal == "보유":
+            final_read = "싼 가격과 불안 요인이 섞여 있어 관찰을 우선한다."
+        elif base_signal == "조금씩매도":
+            final_read = "전량 청산이 아니라 변동성 때문에 비중을 낮춰 방어한다."
+        else:
+            final_read = "추세 훼손과 외부 변수가 겹치면 방어를 우선한다."
 
     def pill(label, items, tone):
         if not items:
@@ -316,22 +333,16 @@ def pm_guardian_html(mkt, inds, pos, exit_hits, data):
         txt = ", ".join(items[:3]) + (" 외" if len(items) > 3 else "")
         return f'<div class="pm-pill {tone}"><b>{label}</b><span>{txt}</span></div>'
 
-    if confidence == "낮음":
-        verdict = "지표 충돌/위험 또는 신선도 이슈가 있어 신호를 강하게 해석하지 않는다."
-    elif confidence == "중간":
-        verdict = "방향성은 보이지만 반대 근거가 있어 분할·관찰 관점으로만 읽는다."
-    else:
-        verdict = "충돌이 적어 현재 규칙 해석의 신뢰도가 비교적 높다."
-    conflict_html = "".join(f'<li>{_html.escape(x)}</li>' for x in conflict[:3]) or "<li>주요 충돌 신호 없음</li>"
+    conflict_html = "".join(f'<li>{_html.escape(x)}</li>' for x in conflict[:3]) or "<li>큰 충돌 없음</li>"
     stale_html = "".join(f'<li>{_html.escape(x)}</li>' for x in stale[:3]) or "<li>월 단위로 오래된 핵심 지표 없음</li>"
     return f'''<div class="pm-card">
-    <div class="pm-head"><span class="eyebrow">PM 감시자 메모</span><span class="pm-conf {cls}">확신도 {confidence}</span></div>
-    <div class="pm-verdict">{verdict}</div>
+    <div class="pm-head"><span class="eyebrow">판단 보정 메모</span><span class="pm-conf {cls}">{caution}</span></div>
+    <div class="pm-verdict"><b>최종 해석:</b> {final_read}</div>
     <div class="pm-grid">
       {pill("위험", red, "red")}{pill("주의", amber, "amber")}{pill("우호", green, "green")}
     </div>
-    <div class="pm-cols"><div><b>충돌 신호</b><ul>{conflict_html}</ul></div><div><b>신선도 주의</b><ul>{stale_html}</ul></div></div>
-    <div class="pm-note">LLM/PM 감시자는 주문자가 아닙니다. 이 메모는 매수·매도 지시가 아니라, 신호를 과신하지 않기 위한 리스크 점검입니다.</div>
+    <div class="pm-cols"><div><b>왜 조심해야 하나</b><ul>{conflict_html}</ul></div><div><b>오래된 지표</b><ul>{stale_html}</ul></div></div>
+    <div class="pm-note">보정 메모는 위의 기본 신호를 덮지 않습니다. 매수·매도 지시가 아니라, 현재 신호를 얼마나 조심스럽게 읽을지 알려주는 안전장치입니다.</div>
   </div>'''
 
 def pane_html(mkt,data):
@@ -363,7 +374,7 @@ def pane_html(mkt,data):
     <div class="stance-directive">{st["directive"]}</div>
     {meter_html(pos)}
     <div class="caveat"><i>◈</i><span>{st["caveat"]}</span></div>
-    {pm_guardian_html(mkt,inds,pos,exit_hits,data)}
+    {pm_guardian_html(mkt,inds,pos,exit_hits,data,st)}
   </div>
   {tiles_html(mkt,inds,exit_hits)}
   <div class="section-h"><span class="eyebrow">핵심 지표 · 눌러서 설명</span><span class="rule"></span></div>
