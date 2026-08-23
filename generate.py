@@ -262,6 +262,78 @@ def meter_html(pos):
     return (f'<div class="meter-track"><div class="meter-marker" style="left:{pos}%"></div></div>'
             f'<div class="meter-scale">{spans}</div>')
 
+def pm_guardian_html(mkt, inds, pos, exit_hits, data):
+    """LLM/PM 감시자 관점의 읽기 전용 리스크 메모.
+
+    Notion "오픈소스 헤지펀드 스택" 교훈 반영:
+    - LLM은 주문자가 아니라 감독자다.
+    - 예측값보다 확신도/충돌/신선도를 본다.
+    - 확신도 낮으면 행동 지시가 아니라 관찰/보수화 메모를 낸다.
+    """
+    tones = {k: v.get("tone", "gray") for k, v in inds.items()}
+    red = [inds[k]["name"].split(" (")[0] for k, t in tones.items() if t == "red"]
+    amber = [inds[k]["name"].split(" (")[0] for k, t in tones.items() if t == "amber"]
+    green = [inds[k]["name"].split(" (")[0] for k, t in tones.items() if t == "green"]
+    stale = []
+    asof = str(data.get("asOf", ""))
+    mmdd = ""
+    if len(asof) >= 10:
+        mmdd = asof[5:7] + "-" + asof[8:10]
+    for k, v in inds.items():
+        sd = str(v.get("src_date", ""))
+        if sd and mmdd and not sd.endswith(mmdd) and not sd.endswith(mmdd.replace("-", "/")):
+            if sd.startswith("07-") or sd.startswith("07/"):
+                stale.append(inds[k]["name"].split(" (")[0])
+
+    conflict = []
+    if mkt == "us":
+        if tones.get("trend") == "green" and tones.get("cape") in ("amber", "red"):
+            conflict.append("추세는 우호적이나 밸류에이션 부담이 큼")
+        if tones.get("hy") == "green" and tones.get("real_yield") in ("amber", "red"):
+            conflict.append("신용시장은 안정적이나 실질금리 부담이 남음")
+    else:
+        if tones.get("trend") == "green" and tones.get("vol") == "red":
+            conflict.append("200일 추세는 유지되지만 변동성은 위험권")
+        if tones.get("valuation") == "amber" and tones.get("bok") == "red":
+            conflict.append("싸 보이는 밸류에이션과 긴축 부담이 충돌")
+        if tones.get("flows") in ("amber", "red") and tones.get("fx") in ("amber", "red"):
+            conflict.append("외국인 수급과 환율이 동시에 부담")
+
+    score = 0
+    score += len(red) * 2 + len(amber)
+    score += len(conflict) * 2 + len(stale)
+    score += 2 if exit_hits >= 2 else 0
+    if score >= 8:
+        confidence, cls = "낮음", "red"
+    elif score >= 4:
+        confidence, cls = "중간", "amber"
+    else:
+        confidence, cls = "높음", "green"
+
+    def pill(label, items, tone):
+        if not items:
+            return ""
+        txt = ", ".join(items[:3]) + (" 외" if len(items) > 3 else "")
+        return f'<div class="pm-pill {tone}"><b>{label}</b><span>{txt}</span></div>'
+
+    if confidence == "낮음":
+        verdict = "지표 충돌/위험 또는 신선도 이슈가 있어 신호를 강하게 해석하지 않는다."
+    elif confidence == "중간":
+        verdict = "방향성은 보이지만 반대 근거가 있어 분할·관찰 관점으로만 읽는다."
+    else:
+        verdict = "충돌이 적어 현재 규칙 해석의 신뢰도가 비교적 높다."
+    conflict_html = "".join(f'<li>{_html.escape(x)}</li>' for x in conflict[:3]) or "<li>주요 충돌 신호 없음</li>"
+    stale_html = "".join(f'<li>{_html.escape(x)}</li>' for x in stale[:3]) or "<li>월 단위로 오래된 핵심 지표 없음</li>"
+    return f'''<div class="pm-card">
+    <div class="pm-head"><span class="eyebrow">PM 감시자 메모</span><span class="pm-conf {cls}">확신도 {confidence}</span></div>
+    <div class="pm-verdict">{verdict}</div>
+    <div class="pm-grid">
+      {pill("위험", red, "red")}{pill("주의", amber, "amber")}{pill("우호", green, "green")}
+    </div>
+    <div class="pm-cols"><div><b>충돌 신호</b><ul>{conflict_html}</ul></div><div><b>신선도 주의</b><ul>{stale_html}</ul></div></div>
+    <div class="pm-note">LLM/PM 감시자는 주문자가 아닙니다. 이 메모는 매수·매도 지시가 아니라, 신호를 과신하지 않기 위한 리스크 점검입니다.</div>
+  </div>'''
+
 def pane_html(mkt,data):
     inds,pos,exit_hits=compute(mkt,data)
     order=list(META[mkt].keys())
@@ -291,6 +363,7 @@ def pane_html(mkt,data):
     <div class="stance-directive">{st["directive"]}</div>
     {meter_html(pos)}
     <div class="caveat"><i>◈</i><span>{st["caveat"]}</span></div>
+    {pm_guardian_html(mkt,inds,pos,exit_hits,data)}
   </div>
   {tiles_html(mkt,inds,exit_hits)}
   <div class="section-h"><span class="eyebrow">핵심 지표 · 눌러서 설명</span><span class="rule"></span></div>
@@ -345,6 +418,12 @@ PAGE = '''<!DOCTYPE html>
   .meter-scale span{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.02em;text-align:center;flex:1}
   .meter-scale span.act{color:var(--amber);font-weight:600}
   .caveat{margin-top:16px;font-size:12px;color:var(--dim);font-family:var(--mono);display:flex;gap:7px;align-items:baseline}.caveat i{color:var(--steel);font-style:normal}
+  .pm-card{margin-top:16px;border:1px solid rgba(95,168,196,.32);border-radius:14px;background:rgba(95,168,196,.055);padding:14px 15px}
+  .pm-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.pm-conf{font-family:var(--mono);font-size:11px;border-radius:999px;padding:4px 8px;border:1px solid var(--line)}
+  .pm-conf.green{color:var(--green);border-color:rgba(79,178,134,.35);background:rgba(79,178,134,.08)}.pm-conf.amber{color:var(--amber);border-color:rgba(217,164,65,.35);background:rgba(217,164,65,.08)}.pm-conf.red{color:var(--red);border-color:rgba(224,106,92,.35);background:rgba(224,106,92,.08)}
+  .pm-verdict{font-size:13.5px;color:var(--hi);font-weight:600;margin-bottom:10px}.pm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}@media(max-width:720px){.pm-grid{grid-template-columns:1fr}}
+  .pm-pill{border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:rgba(11,16,23,.35)}.pm-pill b{display:block;font-size:11px;font-family:var(--mono);margin-bottom:3px}.pm-pill span{font-size:12px;color:var(--mid)}.pm-pill.green b{color:var(--green)}.pm-pill.amber b{color:var(--amber)}.pm-pill.red b{color:var(--red)}
+  .pm-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}@media(max-width:720px){.pm-cols{grid-template-columns:1fr}}.pm-cols>div{border-top:1px solid rgba(32,42,56,.8);padding-top:8px}.pm-cols b{font-size:12px;color:var(--steel)}.pm-cols ul{margin:5px 0 0 17px;color:var(--mid);font-size:12px;line-height:1.55}.pm-note{margin-top:10px;color:var(--dim);font-family:var(--mono);font-size:10.5px;line-height:1.55}
   .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}@media(max-width:720px){.tiles{grid-template-columns:1fr}}
   .tile{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:15px 16px;position:relative;overflow:hidden}
   .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
