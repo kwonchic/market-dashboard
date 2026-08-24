@@ -1,34 +1,34 @@
 {
-  "asOf": "2026-08-24",
+  "asOf": "2026-08-25",
   "note_freshness": "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline). 스케줄 실행 시마다 새로 조회됩니다.",
   "us": {
     "trend": {
       "num": 1,
       "val": "상승 · 200일선 위",
-      "src_date": "08-21",
+      "src_date": "08-24",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,674 / 50일선 7,541 / 200일선 7,096 · 63일 고점대비 -1.6% · 20일 3.5%",
-      "above20": true,
+      "note": "S&P 7,645 / 50일선 7,546 / 200일선 7,100 · 63일 고점대비 -2.0% · 20일 3.1%",
+      "above20": false,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.016,
-      "reb63": 0.0561,
-      "dd252": -0.016,
-      "r20": 0.0354
+      "dd63": -0.0198,
+      "reb63": 0.052,
+      "dd252": -0.0198,
+      "r20": 0.0312
     },
     "cape": {
       "num": 41.96,
       "val": "매우 비쌈 · CAPE 42.0",
-      "src_date": "08-24",
+      "src_date": "08-25",
       "auto": true
     },
     "hy": {
-      "num": 275,
-      "val": "275bp · 저점권",
-      "src_date": "08-20",
+      "num": 270,
+      "val": "270bp · 저점권",
+      "src_date": "08-21",
       "auto": true
     },
     "breadth": {
@@ -38,7 +38,7 @@
       "auto": true
     },
     "vix": {
-      "num": 15.8,
+      "num": 15.9,
       "val": "16 · 잠잠",
       "src_date": "08-24",
       "auto": true,
@@ -83,12 +83,11 @@
       "note": "외국인 5일 -5.92조 · 20일 -3.54조 · 기관 5일 -5.51조"
     },
     "fx": {
-      "num": 1388,
-      "val": "~1,388원 · 약세",
-      "src_date": "08-24",
+      "num": 1385,
+      "val": "~1,385원 · 약세",
+      "src_date": "08-25",
       "auto": true,
-      "tone": "amber",
-      "note": "validFrom 2026-08-24T23:54:41.000+09:00"
+      "tone": "amber"
     },
     "bok": {
       "num": 2.75,
