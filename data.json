@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-08-29",
+  "asOf": "2026-08-30",
   "note_freshness": "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline). 스케줄 실행 시마다 새로 조회됩니다.",
   "us": {
     "trend": {
@@ -85,10 +85,10 @@
     "fx": {
       "num": 1384,
       "val": "~1,384원 · 약세",
-      "src_date": "08-29",
+      "src_date": "08-30",
       "auto": true,
       "tone": "amber",
-      "note": "validFrom 2026-08-29T23:54:50.000+09:00"
+      "note": "validFrom 2026-08-30T08:34:50.000+09:00"
     },
     "bok": {
       "num": 2.75,
