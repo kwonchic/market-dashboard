@@ -274,6 +274,55 @@ def fetch_samsung_pbr():
     }
 
 
+def fetch_bok_base_rate():
+    """한국은행 홈페이지에서 최신 기준금리를 파싱한다.
+
+    kr.bok가 수동 고정값으로 남아 시장 판단 신뢰를 훼손한 사고(2026-09-02) 후속.
+    실패하면 기존값 유지하되, 성공 시 auto=True로 표시한다.
+    """
+    url = "https://www.bok.or.kr/portal/main/main.do"
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+    r.raise_for_status()
+    text = r.text
+    m = re.search(
+        r"통화정책방향 \((\d{4})\.(\d{1,2})\.(\d{1,2})\).*?"
+        r"기준금리를\s*([0-9.]+)%에서\s*([0-9.]+)%로\s*<br/>\s*([0-9.]+)%p\s*상향",
+        text,
+        re.S,
+    )
+    direction = "인상"
+    if not m:
+        m = re.search(
+            r"통화정책방향 \((\d{4})\.(\d{1,2})\.(\d{1,2})\).*?"
+            r"기준금리를\s*([0-9.]+)%에서\s*([0-9.]+)%로\s*<br/>\s*([0-9.]+)%p\s*하향",
+            text,
+            re.S,
+        )
+        direction = "인하"
+    if not m:
+        m2 = re.search(r"기준금리를 현재의\s*([0-9.]+)%\s*수준에서\s*([0-9.]+)%로\s*(상향|하향)", text, re.S)
+        if not m2:
+            raise ValueError("bok_base_rate_not_found")
+        prev, current, dir_word = float(m2.group(1)), float(m2.group(2)), m2.group(3)
+        direction = "인상" if dir_word == "상향" else "인하"
+        src_date = datetime.now(KST).strftime("%m-%d")
+        delta = abs(current - prev)
+    else:
+        y, mo, d, prev_s, current_s, delta_s = m.groups()
+        prev, current, delta = float(prev_s), float(current_s), float(delta_s)
+        src_date = f"{int(mo):02d}-{int(d):02d}"
+    tone = "red" if direction == "인상" else ("green" if direction == "인하" else "amber")
+    return {
+        "num": round(current, 2),
+        "val": f"{current:.2f}%로 {direction}({'긴축' if direction == '인상' else '완화'})",
+        "src_date": src_date,
+        "auto": True,
+        "tone": tone,
+        "note": f"한국은행 통화정책방향: {prev:.2f}% → {current:.2f}% ({delta:.2f}%p {direction})",
+        "source": "BOK",
+    }
+
+
 def main():
     client = TossClient()
     path = os.path.join(HERE, "data.json")
@@ -319,8 +368,14 @@ def main():
     except Exception as e:
         failed.append(f"kr.samsung_pbr: {e}")
 
+    try:
+        data["kr"]["bok"] = fetch_bok_base_rate()
+        ok.append("kr.bok")
+    except Exception as e:
+        failed.append(f"kr.bok: {e}")
+
     data["asOf"] = datetime.now(KST).strftime("%Y-%m-%d")
-    data["note_freshness"] = "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline). 스케줄 실행 시마다 새로 조회됩니다."
+    data["note_freshness"] = "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline, 기준금리는 한국은행). 스케줄 실행 시마다 새로 조회됩니다."
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -330,7 +385,7 @@ def main():
         print("failed (기존값 유지):", file=sys.stderr)
         for f_ in failed:
             print(f"  - {f_}", file=sys.stderr)
-    print("manual (기존값 유지): kr.valuation, kr.bok")
+    print("manual (기존값 유지): kr.valuation")
 
 
 if __name__ == "__main__":
