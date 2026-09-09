@@ -8,20 +8,20 @@
       "src_date": "09-08",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,693 / 50일선 7,598 / 200일선 7,147 · 63일 고점대비 -1.4% · 20일 -0.8%",
+      "note": "S&P 7,674 / 50일선 7,598 / 200일선 7,147 · 63일 고점대비 -1.6% · 20일 -1.0%",
       "above20": false,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0136,
-      "reb63": 0.0586,
-      "dd252": -0.0136,
-      "r20": -0.0077
+      "dd63": -0.0161,
+      "reb63": 0.0559,
+      "dd252": -0.0161,
+      "r20": -0.0103
     },
     "cape": {
-      "num": 41.41,
-      "val": "매우 비쌈 · CAPE 41.4",
+      "num": 41.18,
+      "val": "매우 비쌈 · CAPE 41.2",
       "src_date": "09-09",
       "auto": true
     },
@@ -38,16 +38,16 @@
       "auto": true
     },
     "vix": {
-      "num": 15.3,
-      "val": "15 · 잠잠",
+      "num": 15.7,
+      "val": "16 · 잠잠",
       "src_date": "09-08",
       "auto": true,
-      "vix_falling": true
+      "vix_falling": false
     },
     "real_yield": {
-      "num": 2.42,
-      "val": "2.42% · 부담",
-      "src_date": "09-03",
+      "num": 2.43,
+      "val": "2.43% · 부담",
+      "src_date": "09-04",
       "auto": true
     }
   },
@@ -83,12 +83,11 @@
       "note": "외국인 5일 +4.95조 · 20일 +0.32조 · 기관 5일 +7.11조"
     },
     "fx": {
-      "num": 1338,
-      "val": "~1,338원 · 안정",
+      "num": 1341,
+      "val": "~1,341원 · 안정",
       "src_date": "09-09",
       "auto": true,
-      "tone": "green",
-      "note": "validFrom 2026-09-09T08:34:44.000+09:00"
+      "tone": "green"
     },
     "bok": {
       "num": 3.0,
