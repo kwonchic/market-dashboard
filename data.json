@@ -38,9 +38,9 @@
       "auto": true
     },
     "vix": {
-      "num": 17.8,
-      "val": "18 · 잠잠",
-      "src_date": "09-10",
+      "num": 17.1,
+      "val": "17 · 잠잠",
+      "src_date": "09-11",
       "auto": true,
       "vix_falling": false
     },
@@ -87,8 +87,7 @@
       "val": "~1,345원 · 안정",
       "src_date": "09-11",
       "auto": true,
-      "tone": "green",
-      "note": "validFrom 2026-09-11T16:04:40.000+09:00"
+      "tone": "green"
     },
     "bok": {
       "num": 3.0,
