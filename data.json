@@ -87,8 +87,7 @@
       "val": "~1,386원 · 약세",
       "src_date": "09-21",
       "auto": true,
-      "tone": "amber",
-      "note": "validFrom 2026-09-21T08:34:17.000+09:00"
+      "tone": "amber"
     },
     "bok": {
       "num": 3.0,
