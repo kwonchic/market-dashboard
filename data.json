@@ -1,34 +1,34 @@
 {
-  "asOf": "2026-09-30",
+  "asOf": "2026-10-01",
   "note_freshness": "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline, 기준금리는 한국은행). 스케줄 실행 시마다 새로 조회됩니다.",
   "us": {
     "trend": {
       "num": 1,
       "val": "상승 · 200일선 위",
-      "src_date": "09-29",
+      "src_date": "09-30",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,671 / 50일선 7,645 / 200일선 7,213 · 63일 고점대비 -1.6% · 20일 -0.2%",
+      "note": "S&P 7,702 / 50일선 7,649 / 200일선 7,217 · 63일 고점대비 -1.2% · 20일 0.9%",
       "above20": true,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0164,
-      "reb63": 0.0485,
-      "dd252": -0.0164,
-      "r20": -0.002
+      "dd63": -0.0124,
+      "reb63": 0.0528,
+      "dd252": -0.0124,
+      "r20": 0.0093
     },
     "cape": {
       "num": 41.08,
       "val": "매우 비쌈 · CAPE 41.1",
-      "src_date": "09-30",
+      "src_date": "10-01",
       "auto": true
     },
     "hy": {
-      "num": 302,
-      "val": "302bp · 주의 구간",
-      "src_date": "09-28",
+      "num": 308,
+      "val": "308bp · 주의 구간",
+      "src_date": "09-29",
       "auto": true
     },
     "breadth": {
@@ -42,7 +42,7 @@
       "val": "16 · 잠잠",
       "src_date": "09-30",
       "auto": true,
-      "vix_falling": true
+      "vix_falling": false
     },
     "real_yield": {
       "num": 2.9,
@@ -85,7 +85,7 @@
     "fx": {
       "num": 1354,
       "val": "~1,354원 · 약세",
-      "src_date": "09-30",
+      "src_date": "10-01",
       "auto": true,
       "tone": "amber"
     },
