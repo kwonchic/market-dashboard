@@ -5,19 +5,19 @@
     "trend": {
       "num": 1,
       "val": "상승 · 200일선 위",
-      "src_date": "09-30",
+      "src_date": "10-01",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,652 / 50일선 7,648 / 200일선 7,217 · 63일 고점대비 -1.9% · 20일 0.3%",
+      "note": "S&P 7,636 / 50일선 7,651 / 200일선 7,221 · 63일 고점대비 -2.1% · 20일 -0.4%",
       "above20": false,
-      "above50": true,
+      "above50": false,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0189,
-      "reb63": 0.0458,
-      "dd252": -0.0189,
-      "r20": 0.0026
+      "dd63": -0.0209,
+      "reb63": 0.0438,
+      "dd252": -0.0209,
+      "r20": -0.0039
     },
     "cape": {
       "num": 41.0,
@@ -26,9 +26,9 @@
       "auto": true
     },
     "hy": {
-      "num": 308,
-      "val": "308bp · 주의 구간",
-      "src_date": "09-29",
+      "num": 312,
+      "val": "312bp · 주의 구간",
+      "src_date": "09-30",
       "auto": true
     },
     "breadth": {
@@ -38,9 +38,9 @@
       "auto": true
     },
     "vix": {
-      "num": 16.3,
-      "val": "16 · 잠잠",
-      "src_date": "09-30",
+      "num": 17.3,
+      "val": "17 · 잠잠",
+      "src_date": "10-01",
       "auto": true,
       "vix_falling": false
     },
