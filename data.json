@@ -20,8 +20,8 @@
       "r20": 0.0217
     },
     "cape": {
-      "num": 41.9,
-      "val": "매우 비쌈 · CAPE 41.9",
+      "num": 41.8,
+      "val": "매우 비쌈 · CAPE 41.8",
       "src_date": "10-08",
       "auto": true
     },
@@ -45,9 +45,9 @@
       "vix_falling": true
     },
     "real_yield": {
-      "num": 2.95,
-      "val": "2.95% · 강한 부담",
-      "src_date": "10-05",
+      "num": 2.91,
+      "val": "2.91% · 강한 부담",
+      "src_date": "10-06",
       "auto": true
     }
   },
