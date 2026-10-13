@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-13",
+  "asOf": "2026-10-14",
   "note_freshness": "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline, 기준금리는 한국은행). 스케줄 실행 시마다 새로 조회됩니다.",
   "us": {
     "trend": {
@@ -8,27 +8,27 @@
       "src_date": "10-13",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,800 / 50일선 7,707 / 200일선 7,259 · 63일 고점대비 -0.2% · 20일 2.8%",
+      "note": "S&P 7,810 / 50일선 7,707 / 200일선 7,260 · 63일 고점대비 -0.1% · 20일 3.0%",
       "above20": true,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0024,
-      "reb63": 0.0661,
-      "dd252": -0.0024,
-      "r20": 0.0283
+      "dd63": -0.0012,
+      "reb63": 0.0675,
+      "dd252": -0.0012,
+      "r20": 0.0295
     },
     "cape": {
       "num": 41.85,
       "val": "매우 비쌈 · CAPE 41.9",
-      "src_date": "10-13",
+      "src_date": "10-14",
       "auto": true
     },
     "hy": {
-      "num": 315,
-      "val": "315bp · 주의 구간",
-      "src_date": "10-08",
+      "num": 311,
+      "val": "311bp · 주의 구간",
+      "src_date": "10-12",
       "auto": true
     },
     "breadth": {
@@ -38,7 +38,7 @@
       "auto": true
     },
     "vix": {
-      "num": 15.3,
+      "num": 15.4,
       "val": "15 · 잠잠",
       "src_date": "10-13",
       "auto": true,
@@ -85,7 +85,7 @@
     "fx": {
       "num": 1334,
       "val": "~1,334원 · 안정",
-      "src_date": "10-13",
+      "src_date": "10-14",
       "auto": true,
       "tone": "amber"
     },
