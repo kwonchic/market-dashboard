@@ -1,34 +1,34 @@
 {
-  "asOf": "2026-10-14",
+  "asOf": "2026-10-15",
   "note_freshness": "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline, 기준금리는 한국은행). 스케줄 실행 시마다 새로 조회됩니다.",
   "us": {
     "trend": {
       "num": 1,
       "val": "상승 · 200일선 위",
-      "src_date": "10-13",
+      "src_date": "10-14",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,805 / 50일선 7,707 / 200일선 7,259 · 63일 고점대비 -0.2% · 20일 2.9%",
-      "above20": true,
+      "note": "S&P 7,717 / 50일선 7,707 / 200일선 7,263 · 63일 고점대비 -1.3% · 20일 2.2%",
+      "above20": false,
       "above50": true,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0017,
-      "reb63": 0.0669,
-      "dd252": -0.0017,
-      "r20": 0.029
+      "dd63": -0.0131,
+      "reb63": 0.0548,
+      "dd252": -0.0131,
+      "r20": 0.0218
     },
     "cape": {
       "num": 41.84,
       "val": "매우 비쌈 · CAPE 41.8",
-      "src_date": "10-14",
+      "src_date": "10-15",
       "auto": true
     },
     "hy": {
-      "num": 311,
-      "val": "311bp · 주의 구간",
-      "src_date": "10-12",
+      "num": 316,
+      "val": "316bp · 주의 구간",
+      "src_date": "10-13",
       "auto": true
     },
     "breadth": {
@@ -38,8 +38,8 @@
       "auto": true
     },
     "vix": {
-      "num": 15.8,
-      "val": "16 · 잠잠",
+      "num": 16.7,
+      "val": "17 · 잠잠",
       "src_date": "10-14",
       "auto": true,
       "vix_falling": true
@@ -85,7 +85,7 @@
     "fx": {
       "num": 1341,
       "val": "~1,341원 · 안정",
-      "src_date": "10-14",
+      "src_date": "10-15",
       "auto": true,
       "tone": "amber"
     },
