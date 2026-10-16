@@ -38,9 +38,9 @@
       "auto": true
     },
     "vix": {
-      "num": 16.5,
+      "num": 16.0,
       "val": "16 · 잠잠",
-      "src_date": "10-15",
+      "src_date": "10-16",
       "auto": true,
       "vix_falling": false
     },
