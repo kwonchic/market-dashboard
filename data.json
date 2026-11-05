@@ -8,7 +8,7 @@
       "src_date": "11-04",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,688 / 50일선 7,693 / 200일선 7,320 · 63일 고점대비 -1.7% · 20일 -1.5%",
+      "note": "S&P 7,689 / 50일선 7,693 / 200일선 7,320 · 63일 고점대비 -1.7% · 20일 -1.5%",
       "above20": false,
       "above50": false,
       "above200": true,
@@ -38,16 +38,16 @@
       "auto": true
     },
     "vix": {
-      "num": 16.8,
+      "num": 16.6,
       "val": "17 · 잠잠",
       "src_date": "11-04",
       "auto": true,
       "vix_falling": false
     },
     "real_yield": {
-      "num": 2.62,
-      "val": "2.62% · 강한 부담",
-      "src_date": "11-02",
+      "num": 2.65,
+      "val": "2.65% · 강한 부담",
+      "src_date": "11-03",
       "auto": true
     }
   },
@@ -83,8 +83,8 @@
       "note": "외국인 5일 -6.69조 · 20일 -19.40조 · 기관 5일 +0.59조"
     },
     "fx": {
-      "num": 1344,
-      "val": "~1,344원 · 안정",
+      "num": 1340,
+      "val": "~1,340원 · 안정",
       "src_date": "11-05",
       "auto": true,
       "tone": "amber"
