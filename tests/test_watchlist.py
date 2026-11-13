@@ -731,6 +731,10 @@ class WatchlistNoRedirectTests(unittest.TestCase):
         for cmd in seen:
             flags = [a for a in cmd[:-1] if a.startswith("-") and not a.startswith("--")]
             self.assertFalse(any("L" in f for f in flags), msg=cmd)  # no -L / -sL
+            self.assertEqual(cmd[0], "curl")
+            self.assertEqual(cmd[1], "-q", msg=cmd)  # -q must be the first option or it is ignored
+            self.assertIn("--no-location", cmd)
+            self.assertIn("-s", cmd)
             self.assertNotIn("--location", cmd)
             self.assertNotIn("--location-trusted", cmd)
             i = cmd.index("--proto")
@@ -761,6 +765,105 @@ class WatchlistNoRedirectTests(unittest.TestCase):
     def test_fetch_without_redirects_returns_body_only(self):
         with mock.patch.object(fetch_data.subprocess, "run", fake_curl("200", body_for="{\"a\": 1}")):
             self.assertEqual(fetch_data.fetch("https://example.invalid/x", follow_redirects=False), "{\"a\": 1}")
+
+
+import contextlib, http.server, tempfile, threading  # noqa: E402
+
+
+class _RedirectLab:
+    """Two loopback HTTP servers on ephemeral ports: A answers 302 -> B; B counts hits and answers 200."""
+
+    DEST_BODY = "REDIRECT-DESTINATION-REACHED"
+
+    def __enter__(self):
+        lab = self
+        lab.hits_b = 0
+        lock = threading.Lock()
+
+        class B(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                with lock:
+                    lab.hits_b += 1
+                payload = lab.DEST_BODY.encode()
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+            def log_message(self, *a):
+                pass
+
+        self.srv_b = http.server.ThreadingHTTPServer(("127.0.0.1", 0), B)
+        url_b = f"http://127.0.0.1:{self.srv_b.server_address[1]}/dest"
+
+        class A(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(302)
+                self.send_header("Location", url_b)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *a):
+                pass
+
+        self.srv_a = http.server.ThreadingHTTPServer(("127.0.0.1", 0), A)
+        self.url_a = f"http://127.0.0.1:{self.srv_a.server_address[1]}/start"
+        self.threads = [threading.Thread(target=s.serve_forever, daemon=True) for s in (self.srv_a, self.srv_b)]
+        for t in self.threads:
+            t.start()
+        return self
+
+    def __exit__(self, *exc):
+        for s in (self.srv_a, self.srv_b):
+            s.shutdown()
+            s.server_close()
+        for t in self.threads:
+            t.join(timeout=5)
+        return False
+
+
+@contextlib.contextmanager
+def _ambient_curlrc(content):
+    """Temporarily point CURL_HOME at a temp dir holding .curlrc; always restore the environment."""
+    keys = ("CURL_HOME", "NO_PROXY", "no_proxy")
+    saved = {k: os.environ.get(k) for k in keys}
+    with tempfile.TemporaryDirectory() as home:
+        with open(os.path.join(home, ".curlrc"), "w", encoding="utf-8") as f:
+            f.write(content)
+        os.environ["CURL_HOME"] = home
+        os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1"  # keep loopback off any ambient proxy
+        try:
+            yield
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+
+class AmbientCurlConfigRedirectTests(unittest.TestCase):
+    """Real installed curl: omitting -L is not enough when CURL_HOME/.curlrc says `location`."""
+
+    def test_curlrc_location_cannot_make_no_redirect_fetch_follow(self):
+        with _RedirectLab() as lab, _ambient_curlrc("location\n"):
+            # Precondition (control): the ambient config really does make plain `curl -s` follow to B.
+            ctl = subprocess.run(["curl", "-s", "--max-time", "10", lab.url_a],
+                                 capture_output=True, text=True)
+            self.assertEqual(ctl.stdout, lab.DEST_BODY, msg="control: .curlrc `location` not effective")
+            self.assertEqual(lab.hits_b, 1)
+            lab.hits_b = 0
+
+            with self.assertRaises(ConnectionError):
+                body = fetch_data.fetch(lab.url_a, follow_redirects=False)
+                self.fail(f"redirect destination accepted as data: {body!r}")
+            self.assertEqual(lab.hits_b, 0, msg="redirect destination was contacted")
+
+    def test_environment_restored_after_helper(self):
+        before = {k: os.environ.get(k) for k in ("CURL_HOME", "NO_PROXY", "no_proxy")}
+        with _ambient_curlrc("location\n"):
+            self.assertIn("CURL_HOME", os.environ)
+        self.assertEqual(before, {k: os.environ.get(k) for k in before})
 
 
 class LegacyFetchUnchangedTests(unittest.TestCase):

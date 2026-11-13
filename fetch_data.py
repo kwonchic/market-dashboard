@@ -21,9 +21,12 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 def fetch(url, timeout=30, browser_ua=False, https_only=False, follow_redirects=True):
     # urllib은 FRED에서 간헐 타임아웃 → curl 사용 (로컬·GitHub 러너 모두 내장)
     # FRED는 브라우저 UA를 보내면 빈 응답/차단 → 기본 curl UA 사용. multpl은 반대로 브라우저 UA 필요.
-    # follow_redirects=True(기본)는 기존 동작(curl -L) 그대로다. False면 -L을 빼서 어떤 리다이렉트도 따라가지 않고,
-    # 최종 HTTP 상태가 2xx가 아니면(3xx 포함) ConnectionError — 리다이렉트 응답을 데이터로 받아들이지 않는다.
-    cmd = ["curl", "-sL" if follow_redirects else "-s", "--max-time", str(timeout)]
+    # follow_redirects=True(기본)는 기존 동작(curl -L) 그대로다. False면 리다이렉트를 따라가지 않는다:
+    # -L을 빼는 것만으론 부족하다(CURL_HOME/.curlrc의 `location`이 켜 버릴 수 있음) → -q를 '첫 옵션'으로 두어
+    # 주변 curl 설정 파일을 무시하고, --no-location을 명시한다. 최종 HTTP 상태가 2xx가 아니면(3xx 포함)
+    # ConnectionError — 리다이렉트 응답을 데이터로 받아들이지 않는다.
+    cmd = ["curl", "-sL", "--max-time", str(timeout)] if follow_redirects else \
+          ["curl", "-q", "-s", "--no-location", "--max-time", str(timeout)]
     if browser_ua:
         cmd += ["-A", UA]
     if https_only:  # --proto-redir은 리다이렉트 '스킴'만 제한한다(목적지 호스트는 검증하지 않음)

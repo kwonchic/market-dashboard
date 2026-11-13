@@ -67,7 +67,7 @@ Scope: `fetch_data.py`, `watchlist.py`, tests/fixtures, README. Score formula, d
 
 ## Blocker 1 — redirect host validation
 - Problem: `build_chart_url` validates only the **initial** URL; `curl -L` could follow a 3xx to another host, and `--proto-redir =https` limits the scheme only.
-- Fix: `fetch_data.fetch(..., follow_redirects=True)` (default = unchanged legacy behavior, `-sL`). The watchlist default fetcher passes `follow_redirects=False`: command uses `-s` (no `-L`), keeps `--proto =https --proto-redir =https`, adds `-w "\n%{http_code}"`, and raises `ConnectionError` unless the HTTP status is 2xx. A 3xx therefore is never parsed as stock data → existing fail-soft (prior → `stale`, none → `unavailable`, code `fetch_failed`).
+- Fix: `fetch_data.fetch(..., follow_redirects=True)` (default = unchanged legacy behavior, `-sL`). The watchlist default fetcher passes `follow_redirects=False`: command uses `-s` (no `-L`; superseded by the ambient-config follow-up below: `-q` first + `--no-location`), keeps `--proto =https --proto-redir =https`, adds `-w "\n%{http_code}"`, and raises `ConnectionError` unless the HTTP status is 2xx. A 3xx therefore is never parsed as stock data → existing fail-soft (prior → `stale`, none → `unavailable`, code `fetch_failed`).
 - Wording: this is **not** effective-URL validation; redirects are simply not followed. README/comments say so.
 - Side effect (accepted): a non-2xx Yahoo reply (e.g. 404 JSON error) is now `fetch_failed` instead of `invalid_payload`; both are fail-soft.
 
@@ -101,3 +101,17 @@ Exit 0; `updated: hy, vix, trend_us, real_yield, fx, cape, watchlist / kept prev
 | AAPL | ok | 2026-11-12 | 354.88 USD | 82 / 우호 |
 
 Same values/dates as the previous run; live Yahoo meta still supplies valid `regular` bounds. `data.json` changes besides this are the live refresh of existing `us` auto-indicators (VIX/S&P note).
+
+---
+
+# Follow-up: ambient curl config could re-enable redirects
+
+Problem (independent reviewer, reproduced): omitting `-L` does not disable redirects when `CURL_HOME/.curlrc` contains `location`; a cross-host destination body was accepted as 2xx.
+
+Fix (`fetch_data.fetch`, `follow_redirects=False` only): `curl -q -s --no-location --max-time … [-A UA] --proto =https --proto-redir =https -w "\n%{http_code}" URL`. `-q` is the first option (curl only honors it there) so ambient config is ignored; `--no-location` is explicit. 2xx-only acceptance unchanged. Legacy `follow_redirects=True` command (`-sL`) unchanged. Scope: `fetch_data.py`, tests, README, this report.
+
+Residual note: `-q` also skips any ambient proxy/CA settings from `.curlrc` for watchlist fetches (env vars such as `HTTPS_PROXY` still apply).
+
+TDD: `AmbientCurlConfigRedirectTests` uses real `/usr/bin/curl` against two loopback stdlib servers (A: 302 → B; B: counts hits, 200) with a temp `CURL_HOME/.curlrc` = `location` (env restored, servers shut down in `finally`/`__exit__`). A control step proves the `.curlrc` really makes plain `curl -s` follow.
+- RED (production untouched): `fetch(A, follow_redirects=False)` returned `'REDIRECT-DESTINATION-REACHED'` (no `ConnectionError`); command-inspection test failed `'-s' != '-q'`. `Ran 121 tests … FAILED (failures=2)`.
+- GREEN: `Ran 121 tests … OK`; `ConnectionError` raised for the 302, server B hit count 0.
