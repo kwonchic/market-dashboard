@@ -58,3 +58,46 @@ Screenshots (not committed — they embed live data and would go stale): `/tmp/w
 - Pre-existing, untouched: `scripts/update_toss_market_dashboard.sh` contains a local absolute path (outside this change's scope).
 - `data.json` also carries the live refresh of the existing `us`/`kr` auto-indicators produced by the required `fetch_data.py` run.
 - GitHub Actions cannot be exercised locally; the workflow change is covered by the text-level test only.
+
+---
+
+# Follow-up: two independent-review deployment blockers
+
+Scope: `fetch_data.py`, `watchlist.py`, tests/fixtures, README. Score formula, default 3 symbols, UI, schedules, US/KR logic untouched. Not pushed; new commit on top of `bfa71a2`.
+
+## Blocker 1 — redirect host validation
+- Problem: `build_chart_url` validates only the **initial** URL; `curl -L` could follow a 3xx to another host, and `--proto-redir =https` limits the scheme only.
+- Fix: `fetch_data.fetch(..., follow_redirects=True)` (default = unchanged legacy behavior, `-sL`). The watchlist default fetcher passes `follow_redirects=False`: command uses `-s` (no `-L`), keeps `--proto =https --proto-redir =https`, adds `-w "\n%{http_code}"`, and raises `ConnectionError` unless the HTTP status is 2xx. A 3xx therefore is never parsed as stock data → existing fail-soft (prior → `stale`, none → `unavailable`, code `fetch_failed`).
+- Wording: this is **not** effective-URL validation; redirects are simply not followed. README/comments say so.
+- Side effect (accepted): a non-2xx Yahoo reply (e.g. 404 JSON error) is now `fetch_failed` instead of `invalid_payload`; both are fail-soft.
+
+## Blocker 2 — incomplete-session exclusion failed open
+- Problem: `normalize_chart` swallowed missing/malformed `meta.currentTradingPeriod.regular` and could keep the in-progress daily bar.
+- Fix: new `_regular_session(meta)` is always required: `regular` must be a dict; `start`/`end` true ints (not bool), positive, `start < end`; otherwise `WatchlistDataError` → existing fail-soft (`invalid_payload`). Active session `[start, end)` still drops the last row when it belongs to that session; closed session (now ≥ end) keeps it.
+- Synthetic fixtures (`tests/make_fixtures.py`, regenerated) and `ramp_payload` now include valid regular-session metadata (the only fixture change).
+
+## TDD evidence
+RED (tests added first; production untouched; `ramp_payload` + fixtures already carrying valid metadata so old tests stayed green):
+`python3 -m unittest discover -s tests` → `Ran 119 tests … FAILED (failures=13, errors=2)`
+- Blocker 2 (11 failures): missing `currentTradingPeriod`, missing `regular` key, non-dict period/regular, missing start/end, non-int/bool/float/str/NaN bounds, non-positive bounds, reversed/empty window, plus 2 fail-soft tests (prior→stale, none→unavailable).
+- Blocker 1: 2 errors (`fetch()` has no `follow_redirects` → `TypeError`) and 3 failures (command still contained `-sL`; 3xx status accepted/parsed; default fetch path).
+- Passed-before-change on purpose (regression guards, not RED): 3 legacy-fetch tests (`-sL` command unchanged, `https_only` still follows redirects, browser UA), active/closed-session boundary tests, bar-from-earlier-session test, fixture-metadata test.
+
+GREEN (after minimal production change): `python3 -m unittest discover -s tests -v` → `Ran 119 tests … OK`.
+
+## Verification
+- `python3 -m unittest discover -s tests -v` → **Ran 119 tests, OK**
+- `python3 -m py_compile fetch_data.py generate.py watchlist.py tests/test_watchlist.py tests/make_fixtures.py` → OK
+- `python3 generate.py && cp dashboard.html index.html` → OK; `cmp dashboard.html index.html` identical; 3 `wcard` articles, 0 `<script`
+- `git diff --check` → clean
+
+### Live `python3 fetch_data.py` (2026-11-13 16:11 UTC, redirects off)
+Exit 0; `updated: hy, vix, trend_us, real_yield, fx, cape, watchlist / kept previous: 없음`.
+
+| Symbol | status | source date | close | score / label |
+|---|---|---|---|---|
+| 005930.KS | ok | 2026-11-12 | 208,000 KRW | 20 / 주의 |
+| 000660.KS | ok | 2026-11-12 | 1,254,000 KRW | 20 / 주의 |
+| AAPL | ok | 2026-11-12 | 354.88 USD | 82 / 우호 |
+
+Same values/dates as the previous run; live Yahoo meta still supplies valid `regular` bounds. `data.json` changes besides this are the live refresh of existing `us` auto-indicators (VIX/S&P note).

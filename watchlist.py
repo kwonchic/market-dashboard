@@ -45,11 +45,27 @@ def is_num(v):
     return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
 
 
+def _regular_session(meta):
+    """meta.currentTradingPeriod.regular -> (start, end). 진짜 int(bool 제외)·양수·start<end가 아니면 거부."""
+    period = meta.get("currentTradingPeriod")
+    reg = period.get("regular") if isinstance(period, dict) else None
+    if not isinstance(reg, dict):
+        raise WatchlistDataError("missing regular session")
+    start, end = reg.get("start"), reg.get("end")
+    for v in (start, end):
+        if not isinstance(v, int) or isinstance(v, bool) or v <= 0:
+            raise WatchlistDataError("bad regular session bounds")
+    if start >= end:
+        raise WatchlistDataError("bad regular session window")
+    return start, end
+
+
 def normalize_chart(payload, now_ts=None):
     """Yahoo chart JSON -> {"currency", "gmtoffset", "rows": [(ts, close, volume|None)], "intraday_excluded"}.
 
     - close가 null인 봉은 버린다(거래정지 등). close가 숫자가 아니거나 비유한/0 이하면 payload 전체 거부.
-    - now_ts가 주어지고 마지막 봉이 아직 진행 중인 정규장이면 그 봉은 제외한다(미완성 봉 방지).
+    - meta.currentTradingPeriod.regular(start<end 양의 int)가 없거나 깨졌으면 payload 거부(WatchlistDataError).
+    - now_ts가 정규장 [start,end) 안이고 마지막 봉이 그 정규장에 속하면 그 봉은 제외한다(미완성 봉 방지).
     """
     try:
         chart = payload["chart"]
@@ -92,16 +108,12 @@ def normalize_chart(payload, now_ts=None):
             raise WatchlistDataError("bad close")
         rows.append((ts, float(close), None if vol is None else float(vol)))
 
+    # 정규장 구간은 항상 필수: 없거나 깨졌으면 마지막 봉이 미완성인지 판단할 수 없으므로 payload를 거부한다(fail closed).
+    start, end = _regular_session(meta)
     intraday_excluded = False
-    if now_ts is not None and rows:
-        try:
-            reg = meta["currentTradingPeriod"]["regular"]
-            start, end = int(reg["start"]), int(reg["end"])
-        except Exception:
-            start = end = None
-        if start is not None and start <= now_ts < end and rows[-1][0] >= start:
-            rows = rows[:-1]
-            intraday_excluded = True
+    if now_ts is not None and rows and start <= now_ts < end and rows[-1][0] >= start:
+        rows = rows[:-1]
+        intraday_excluded = True
     if len(rows) < MIN_POINTS:
         raise WatchlistDataError("too few points")
     return {"currency": currency, "gmtoffset": gmtoffset, "rows": rows, "intraday_excluded": intraday_excluded,

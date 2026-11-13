@@ -18,18 +18,27 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 KST = timezone(timedelta(hours=9))
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
-def fetch(url, timeout=30, browser_ua=False, https_only=False):
+def fetch(url, timeout=30, browser_ua=False, https_only=False, follow_redirects=True):
     # urllib은 FRED에서 간헐 타임아웃 → curl 사용 (로컬·GitHub 러너 모두 내장)
     # FRED는 브라우저 UA를 보내면 빈 응답/차단 → 기본 curl UA 사용. multpl은 반대로 브라우저 UA 필요.
-    cmd = ["curl", "-sL", "--max-time", str(timeout)]
+    # follow_redirects=True(기본)는 기존 동작(curl -L) 그대로다. False면 -L을 빼서 어떤 리다이렉트도 따라가지 않고,
+    # 최종 HTTP 상태가 2xx가 아니면(3xx 포함) ConnectionError — 리다이렉트 응답을 데이터로 받아들이지 않는다.
+    cmd = ["curl", "-sL" if follow_redirects else "-s", "--max-time", str(timeout)]
     if browser_ua:
         cmd += ["-A", UA]
-    if https_only:  # 리다이렉트 포함 HTTPS만 허용
+    if https_only:  # --proto-redir은 리다이렉트 '스킴'만 제한한다(목적지 호스트는 검증하지 않음)
         cmd += ["--proto", "=https", "--proto-redir", "=https"]
+    if not follow_redirects:
+        cmd += ["-w", "\n%{http_code}"]
     r = subprocess.run(cmd + [url], capture_output=True, text=True)
     if r.returncode != 0 or not r.stdout:
         raise ConnectionError(f"curl failed ({r.returncode}): {url}")
-    return r.stdout
+    if follow_redirects:
+        return r.stdout
+    body, _, status = r.stdout.rpartition("\n")
+    if not (status.isdigit() and 200 <= int(status) < 300):
+        raise ConnectionError(f"unexpected HTTP status {status!r}: {url}")
+    return body
 
 def fred_series(series_id, days=400):
     """FRED 공개 CSV에서 (date, value) 리스트 반환. 결측치('.')는 제외."""
@@ -184,7 +193,9 @@ def upd_cape(d):
 
 def upd_watchlist(d, fetcher=None, now_ts=None):
     """관심 종목 3개를 종목별로 독립 갱신(Yahoo chart, 키 불필요). 실패 종목은 이전 값을 stale로 보존."""
-    fetcher = fetcher or (lambda url: fetch(url, browser_ua=True, https_only=True))
+    # 리다이렉트는 따라가지 않는다: build_chart_url은 '최초' URL(정확히 query1.finance.yahoo.com)만 검증하므로
+    # 다른 호스트로 보내는 3xx를 따라가면 그 검증이 무의미해진다. 3xx는 fetch가 실패로 처리 → 이전값 stale/unavailable.
+    fetcher = fetcher or (lambda url: fetch(url, browser_ua=True, https_only=True, follow_redirects=False))
     log = lambda msg: print(msg, file=sys.stderr)
     now_ts = int(time.time()) if now_ts is None else now_ts
     d["watchlist"] = wl.refresh_watchlist(fetcher, d.get("watchlist"), now_ts, log)

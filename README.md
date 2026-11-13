@@ -45,9 +45,9 @@ SMA20/50/200, RSI14, 거래량 ÷ 직전 20거래일 평균, 데이터 품질/�
 - 공식은 `watchlist.py` 상수에서 UI 설명을 생성하므로 코드와 설명이 어긋나지 않으며, `tests/test_watchlist.py`가 공식·경계값을 고정합니다.
 
 신뢰성 규칙:
-- Yahoo 호스트(`query1.finance.yahoo.com`)·HTTPS만 허용, 심볼은 정규식 검증 후 URL 인코딩, curl은 `--proto =https`.
+- Yahoo 호스트(`query1.finance.yahoo.com`)·HTTPS만 허용, 심볼은 정규식 검증 후 URL 인코딩. 검증 대상은 '최초' URL뿐이며, 관심 종목 조회는 **리다이렉트를 따라가지 않습니다**(curl `-L` 없음, `--proto =https` 유지). 3xx 등 2xx가 아닌 응답은 데이터로 받지 않고 조회 실패로 처리합니다. 다른 지표(FRED 등)의 조회 동작은 그대로입니다.
 - 비유한 값·0 이하 종가·길이 불일치·정렬 오류·50개 미만 데이터는 payload 전체를 거부.
-- 진행 중인 장의 미완성 일봉은 제외, `close`가 null인 봉은 버림.
+- 진행 중인 장의 미완성 일봉은 제외, `close`가 null인 봉은 버림. `meta.currentTradingPeriod.regular`(양의 정수 start<end)가 없거나 깨졌으면 미완성 봉 여부를 알 수 없으므로 payload 전체를 거부합니다.
 - 조회/검증 실패 시 이전 값을 `stale`(갱신 실패)로 보존하고 `src_date`는 그대로 둡니다. 이전 값이 없으면 `데이터 없음` 카드. 공개 데이터에는 고정 사유 코드(`fetch_failed`/`invalid_payload`)만 남기고 예외 메시지·URL·응답 본문은 복사하지 않습니다.
 - 신선도: 기준일이 데이터 기준일(`asOf`, KST)에서 4일 이내면 `최신`, 넘으면 `지연`.
 

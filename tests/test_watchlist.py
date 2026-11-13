@@ -24,9 +24,12 @@ def ramp_payload(n=60, volumes=None, gmtoffset=32400, first_ts=1_760_000_000):
     """closes = 1..n, one bar per day: every indicator is hand-checkable."""
     closes = [float(i) for i in range(1, n + 1)]
     vols = volumes if volumes is not None else [100] * n
+    stamps = [first_ts + i * 86400 for i in range(n)]
+    regular = {"start": stamps[-1], "end": stamps[-1] + 23400}  # valid regular-session metadata (last bar's session)
     return {"chart": {"result": [{
-        "meta": {"currency": "KRW", "symbol": "T.KS", "gmtoffset": gmtoffset},
-        "timestamp": [first_ts + i * 86400 for i in range(n)],
+        "meta": {"currency": "KRW", "symbol": "T.KS", "gmtoffset": gmtoffset,
+                 "currentTradingPeriod": {"regular": regular}},
+        "timestamp": stamps,
         "indicators": {"quote": [{"close": closes, "volume": vols}]},
     }], "error": None}}
 
@@ -146,6 +149,103 @@ class NormalizeChartTests(unittest.TestCase):
         norm = wl.normalize_chart(p, now_ts=last + 7 * 3600)  # session over
         self.assertEqual(len(norm["rows"]), 60)
         self.assertFalse(norm["intraday_excluded"])
+
+
+class RegularSessionMetadataTests(unittest.TestCase):
+    """Fail closed: without trustworthy regular-session bounds an unfinished daily bar can't be ruled out."""
+
+    def _payload(self, regular):
+        p = ramp_payload(n=60)
+        p["chart"]["result"][0]["meta"]["currentTradingPeriod"] = {"regular": regular}
+        return p
+
+    def test_missing_current_trading_period_rejected(self):
+        for now in (None, 1_800_000_000):
+            p = ramp_payload(n=60)
+            del p["chart"]["result"][0]["meta"]["currentTradingPeriod"]
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(now)):
+                wl.normalize_chart(p, now_ts=now)
+
+    def test_missing_regular_key_rejected(self):
+        p = ramp_payload(n=60)
+        p["chart"]["result"][0]["meta"]["currentTradingPeriod"] = {"pre": {"start": 1, "end": 2}}
+        with self.assertRaises(wl.WatchlistDataError):
+            wl.normalize_chart(p, now_ts=1_800_000_000)
+
+    def test_current_trading_period_not_a_dict_rejected(self):
+        for bad in (None, [], "regular", 5):
+            p = ramp_payload(n=60)
+            p["chart"]["result"][0]["meta"]["currentTradingPeriod"] = bad
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(bad)):
+                wl.normalize_chart(p, now_ts=1_800_000_000)
+
+    def test_regular_not_a_dict_rejected(self):
+        for bad in (None, [], [1, 2], "x", 5, True):
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(bad)):
+                wl.normalize_chart(self._payload(bad), now_ts=1_800_000_000)
+
+    def test_missing_start_or_end_rejected(self):
+        for bad in ({"end": 2_000_000_000}, {"start": 1_700_000_000}, {}):
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(bad)):
+                wl.normalize_chart(self._payload(bad), now_ts=1_800_000_000)
+
+    def test_non_int_bounds_rejected(self):
+        good = 1_700_000_000
+        cases = [
+            {"start": 1_700_000_000.0, "end": good + 3600},   # float
+            {"start": good, "end": good + 3600.5},
+            {"start": True, "end": good + 3600},               # bool is not a timestamp
+            {"start": good, "end": True},
+            {"start": str(good), "end": good + 3600},          # string
+            {"start": good, "end": None},
+            {"start": float("nan"), "end": good + 3600},
+        ]
+        for bad in cases:
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(bad)):
+                wl.normalize_chart(self._payload(bad), now_ts=1_800_000_000)
+
+    def test_non_positive_bounds_rejected(self):
+        for bad in ({"start": 0, "end": 3600}, {"start": -10, "end": 3600}, {"start": -20, "end": -10}):
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(bad)):
+                wl.normalize_chart(self._payload(bad), now_ts=1_800_000_000)
+
+    def test_reversed_or_empty_window_rejected(self):
+        for bad in ({"start": 1_700_003_600, "end": 1_700_000_000}, {"start": 1_700_000_000, "end": 1_700_000_000}):
+            with self.assertRaises(wl.WatchlistDataError, msg=repr(bad)):
+                wl.normalize_chart(self._payload(bad), now_ts=1_800_000_000)
+
+    def test_active_session_excludes_last_bar_boundaries(self):
+        p = ramp_payload(n=60)
+        last = p["chart"]["result"][0]["timestamp"][-1]
+        p = self._payload({"start": last, "end": last + 3600})
+        for now in (last, last + 1, last + 3599):  # [start, end) is active
+            norm = wl.normalize_chart(p, now_ts=now)
+            self.assertEqual(len(norm["rows"]), 59, msg=now)
+            self.assertTrue(norm["intraday_excluded"], msg=now)
+
+    def test_closed_session_retains_last_bar_boundaries(self):
+        p = ramp_payload(n=60)
+        last = p["chart"]["result"][0]["timestamp"][-1]
+        p = self._payload({"start": last, "end": last + 3600})
+        for now in (last + 3600, last + 7200):  # end is exclusive -> closed
+            norm = wl.normalize_chart(p, now_ts=now)
+            self.assertEqual(len(norm["rows"]), 60, msg=now)
+            self.assertFalse(norm["intraday_excluded"], msg=now)
+
+    def test_active_session_keeps_bar_that_belongs_to_earlier_session(self):
+        p = ramp_payload(n=60)
+        last = p["chart"]["result"][0]["timestamp"][-1]
+        p = self._payload({"start": last + 86400, "end": last + 86400 + 3600})
+        norm = wl.normalize_chart(p, now_ts=last + 86400 + 60)
+        self.assertEqual(len(norm["rows"]), 60)
+        self.assertFalse(norm["intraday_excluded"])
+
+    def test_synthetic_fixtures_carry_valid_regular_session(self):
+        for name in ("chart_aapl_uptrend.json", "chart_005930_ks_downtrend.json"):
+            reg = load_fixture(name)["chart"]["result"][0]["meta"]["currentTradingPeriod"]["regular"]
+            self.assertIsInstance(reg["start"], int)
+            self.assertIsInstance(reg["end"], int)
+            self.assertLess(reg["start"], reg["end"])
 
 
 class IndicatorTests(unittest.TestCase):
@@ -523,6 +623,23 @@ class RefreshStockTests(unittest.TestCase):
             self.assertNotIn(leak, joined)
 
 
+class MissingSessionMetadataFailSoftTests(unittest.TestCase):
+    def _body(self):
+        p = copy.deepcopy(ALL_OK["AAPL"])
+        del p["chart"]["result"][0]["meta"]["currentTradingPeriod"]
+        return p
+
+    def test_prior_kept_as_stale_when_session_metadata_missing(self):
+        prior = wl.build_stock("AAPL", "Apple", ALL_OK["AAPL"], NOW_TS)
+        s = wl.refresh_stock("AAPL", "Apple", make_fetcher({"AAPL": self._body()}), prior, NOW_TS)
+        self.assertEqual((s["status"], s["error"], s["src_date"]), ("stale", "invalid_payload", prior["src_date"]))
+        self.assertEqual(s["close"], prior["close"])
+
+    def test_unavailable_when_no_prior_and_session_metadata_missing(self):
+        s = wl.refresh_stock("AAPL", "Apple", make_fetcher({"AAPL": self._body()}), None, NOW_TS)
+        self.assertEqual((s["status"], s["error"], s["score"], s["close"]), ("unavailable", "invalid_payload", None, None))
+
+
 class RefreshWatchlistTests(unittest.TestCase):
     def test_one_symbol_failure_does_not_break_the_others(self):
         outcomes = dict(ALL_OK)
@@ -580,6 +697,99 @@ class FetchDataIntegrationTests(unittest.TestCase):
         names = [n for n, _ in fetch_data.STEPS]
         self.assertIn("watchlist", names)
         self.assertEqual(names[:6], ["hy", "vix", "trend_us", "real_yield", "fx", "cape"])
+
+
+import subprocess  # noqa: E402
+from unittest import mock  # noqa: E402
+
+
+def fake_curl(status="200", seen=None, body_for=None):
+    """subprocess.run stand-in: records argv, answers like `curl ... -w '\\n%{http_code}'` would."""
+    def run(cmd, **kw):
+        if seen is not None:
+            seen.append(list(cmd))
+        sym = _re.search(r"/chart/([^?]+)\?", cmd[-1])
+        body = json.dumps(ALL_OK[sym.group(1)]) if sym else (body_for or "legacy-body")
+        return subprocess.CompletedProcess(cmd, 0, stdout=f"{body}\n{status}", stderr="")
+    return run
+
+
+def run_default_watchlist_fetch(seen, status="200"):
+    data = {}
+    with mock.patch.object(fetch_data.subprocess, "run", fake_curl(status, seen)):
+        fetch_data.upd_watchlist(data, now_ts=NOW_TS)
+    return data["watchlist"]
+
+
+class WatchlistNoRedirectTests(unittest.TestCase):
+    """Watchlist fetches never follow redirects: validating only the first URL is meaningless otherwise."""
+
+    def test_watchlist_command_has_no_follow_flag_and_keeps_https_only(self):
+        seen = []
+        run_default_watchlist_fetch(seen)
+        self.assertEqual(len(seen), 3)
+        for cmd in seen:
+            flags = [a for a in cmd[:-1] if a.startswith("-") and not a.startswith("--")]
+            self.assertFalse(any("L" in f for f in flags), msg=cmd)  # no -L / -sL
+            self.assertNotIn("--location", cmd)
+            self.assertNotIn("--location-trusted", cmd)
+            i = cmd.index("--proto")
+            self.assertEqual(cmd[i + 1], "=https")
+            j = cmd.index("--proto-redir")
+            self.assertEqual(cmd[j + 1], "=https")
+            self.assertTrue(cmd[-1].startswith("https://query1.finance.yahoo.com/v8/finance/chart/"))
+
+    def test_watchlist_default_fetch_still_yields_ok_stocks(self):
+        wlist = run_default_watchlist_fetch([])
+        self.assertEqual([i["status"] for i in wlist["items"]], ["ok", "ok", "ok"])
+
+    def test_redirect_status_is_never_accepted_as_stock_data(self):
+        for status in ("301", "302", "303", "307", "308"):
+            wlist = run_default_watchlist_fetch([], status=status)
+            for item in wlist["items"]:
+                self.assertNotEqual(item["status"], "ok", msg=status)
+                self.assertEqual(item["status"], "unavailable", msg=status)
+                self.assertEqual(item["error"], "fetch_failed", msg=status)
+
+    def test_fetch_without_redirects_rejects_non_2xx(self):
+        for status in ("302", "404", "500", "000", "abc"):
+            with mock.patch.object(fetch_data.subprocess, "run", fake_curl(status)):
+                with self.assertRaises(ConnectionError, msg=status):
+                    fetch_data.fetch("https://query1.finance.yahoo.com/v8/finance/chart/AAPL",
+                                     follow_redirects=False)
+
+    def test_fetch_without_redirects_returns_body_only(self):
+        with mock.patch.object(fetch_data.subprocess, "run", fake_curl("200", body_for="{\"a\": 1}")):
+            self.assertEqual(fetch_data.fetch("https://example.invalid/x", follow_redirects=False), "{\"a\": 1}")
+
+
+class LegacyFetchUnchangedTests(unittest.TestCase):
+    """Regression guards: non-watchlist fetches keep today's redirect-following command and raw stdout."""
+
+    def _cmd(self, **kw):
+        seen = []
+
+        def run(cmd, **k):
+            seen.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 0, stdout="raw-body", stderr="")
+        with mock.patch.object(fetch_data.subprocess, "run", run):
+            out = fetch_data.fetch("https://fred.stlouisfed.org/x", **kw)
+        return seen[0], out
+
+    def test_default_fetch_still_follows_redirects_and_returns_stdout_verbatim(self):
+        cmd, out = self._cmd()
+        self.assertEqual(cmd, ["curl", "-sL", "--max-time", "30", "https://fred.stlouisfed.org/x"])
+        self.assertEqual(out, "raw-body")
+
+    def test_https_only_alone_still_follows_redirects(self):
+        cmd, _ = self._cmd(https_only=True)
+        self.assertIn("-sL", cmd)
+        self.assertEqual(cmd[cmd.index("--proto-redir") + 1], "=https")
+
+    def test_browser_ua_still_sent(self):
+        cmd, _ = self._cmd(browser_ua=True)
+        self.assertEqual(cmd[cmd.index("-A") + 1], fetch_data.UA)
+        self.assertIn("-sL", cmd)
 
 
 # ── Slice 4: freshness + generator (third CSS-only tab) ─────────────────────

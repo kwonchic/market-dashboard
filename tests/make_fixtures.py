@@ -25,12 +25,15 @@ def ts(d, hour, minute):
     return int(datetime(d.year, d.month, d.day, hour, minute, tzinfo=timezone.utc).timestamp())
 
 
-def chart(symbol, currency, tz_name, gmtoffset, open_utc, n, closes, volumes):
+def chart(symbol, currency, tz_name, gmtoffset, open_utc, n, closes, volumes, session_secs=6 * 3600 + 1800):
     days = trading_days(n)
     stamps = [ts(d, *open_utc) for d in days]
+    # regular session of the LAST bar (Yahoo meta.currentTradingPeriod.regular); synthetic but schema-shaped
+    regular = {"start": stamps[-1], "end": stamps[-1] + session_secs, "timezone": tz_name, "gmtoffset": gmtoffset}
     return {"chart": {"result": [{
         "meta": {"currency": currency, "symbol": symbol, "exchangeTimezoneName": tz_name,
-                 "gmtoffset": gmtoffset, "instrumentType": "EQUITY", "dataGranularity": "1d", "range": "1y"},
+                 "gmtoffset": gmtoffset, "instrumentType": "EQUITY", "dataGranularity": "1d", "range": "1y",
+                 "currentTradingPeriod": {"regular": regular}},
         "timestamp": stamps,
         "indicators": {"quote": [{"close": closes, "volume": volumes, "open": closes, "high": closes, "low": closes}]},
     }], "error": None}}
