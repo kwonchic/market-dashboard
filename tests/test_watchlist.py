@@ -507,7 +507,15 @@ def with_symbol(payload, symbol):
 def fixture_for(symbol):
     if symbol == "AAPL":
         return load_fixture("chart_aapl_uptrend.json")
-    return with_symbol(load_fixture("chart_005930_ks_downtrend.json"), symbol)
+    if symbol == "SKHY":
+        # ~90 real bars on NASDAQ; SMA200 must be None (partial) — do not fabricate
+        p = ramp_payload(n=90, gmtoffset=-18000)
+        p["chart"]["result"][0]["meta"]["symbol"] = "SKHY"
+        p["chart"]["result"][0]["meta"]["currency"] = "USD"
+        return p
+    if symbol.endswith(".KS") or symbol.endswith(".KQ"):
+        return with_symbol(load_fixture("chart_005930_ks_downtrend.json"), symbol)
+    return with_symbol(load_fixture("chart_aapl_uptrend.json"), symbol)
 
 
 def make_fetcher(outcomes, seen=None):
@@ -523,13 +531,28 @@ def make_fetcher(outcomes, seen=None):
     return fetch
 
 
-ALL_OK = {sym: fixture_for(sym) for sym in ("005930.KS", "000660.KS", "AAPL")}
+ALL_OK = {sym: fixture_for(sym) for sym, _ in (
+    ("005930.KS", "삼성전자"), ("000660.KS", "SK하이닉스"), ("AAPL", "Apple"),
+    ("FLNC", "플루언스 에너지"), ("CPER", "CPER"), ("CRCL", "써클 인터넷 그룹"),
+    ("SKHY", "SK하이닉스 ADR"), ("NTRA", "나테라"), ("BMNR", "비트마인 이머션 테크놀로지스"),
+    ("NEE", "넥스트에라 에너지"), ("NU", "누 홀딩스"), ("ALAB", "아스테라 랩스"),
+    ("VRT", "버티브 홀딩스"), ("NVTS", "나비타스 세미컨덕터"), ("QBTS", "디웨이브 퀀텀"),
+    ("SMR", "뉴스케일파워"), ("COHR", "코히런트"), ("CRDO", "크레도 테크놀로지 그룹 홀딩"),
+)}
 
 
 class DefaultsTests(unittest.TestCase):
-    def test_default_watchlist_is_exactly_the_three_guide_symbols(self):
-        self.assertEqual(wl.DEFAULT_WATCHLIST,
-                         (("005930.KS", "삼성전자"), ("000660.KS", "SK하이닉스"), ("AAPL", "Apple")))
+    def test_default_watchlist_has_exactly_18_symbols_in_exact_order(self):
+        expected = [
+            ("005930.KS", "삼성전자"), ("000660.KS", "SK하이닉스"), ("AAPL", "Apple"),
+            ("FLNC", "플루언스 에너지"), ("CPER", "CPER"), ("CRCL", "써클 인터넷 그룹"),
+            ("SKHY", "SK하이닉스 ADR"), ("NTRA", "나테라"), ("BMNR", "비트마인 이머션 테크놀로지스"),
+            ("NEE", "넥스트에라 에너지"), ("NU", "누 홀딩스"), ("ALAB", "아스테라 랩스"),
+            ("VRT", "버티브 홀딩스"), ("NVTS", "나비타스 세미컨덕터"), ("QBTS", "디웨이브 퀀텀"),
+            ("SMR", "뉴스케일파워"), ("COHR", "코히런트"), ("CRDO", "크레도 테크놀로지 그룹 홀딩"),
+        ]
+        self.assertEqual(len(wl.DEFAULT_WATCHLIST), 18)
+        self.assertEqual(list(wl.DEFAULT_WATCHLIST), expected)
 
 
 class BuildStockTests(unittest.TestCase):
@@ -646,7 +669,9 @@ class RefreshWatchlistTests(unittest.TestCase):
         outcomes["000660.KS"] = ConnectionError("down")
         wlist = wl.refresh_watchlist(make_fetcher(outcomes), None, NOW_TS)
         items = {i["symbol"]: i for i in wlist["items"]}
-        self.assertEqual([i["symbol"] for i in wlist["items"]], ["005930.KS", "000660.KS", "AAPL"])
+        syms = [i["symbol"] for i in wlist["items"]]
+        self.assertEqual(syms, [sym for sym, _ in wl.DEFAULT_WATCHLIST])
+        self.assertEqual(len(syms), 18)
         self.assertEqual(items["005930.KS"]["status"], "ok")
         self.assertEqual(items["AAPL"]["status"], "ok")
         self.assertEqual(items["000660.KS"]["status"], "unavailable")
@@ -658,6 +683,7 @@ class RefreshWatchlistTests(unittest.TestCase):
         second = wl.refresh_watchlist(make_fetcher(outcomes), first, NOW_TS)
         items = {i["symbol"]: i for i in second["items"]}
         self.assertEqual(items["AAPL"]["status"], "ok")
+        self.assertEqual(len(second["items"]), 18)
         for sym in ("005930.KS", "000660.KS"):
             prev = {i["symbol"]: i for i in first["items"]}[sym]
             self.assertEqual(items[sym]["status"], "stale")
@@ -668,18 +694,21 @@ class RefreshWatchlistTests(unittest.TestCase):
         outcomes = dict(ALL_OK)
         outcomes["AAPL"] = RuntimeError("surprise")
         wlist = wl.refresh_watchlist(make_fetcher(outcomes), None, NOW_TS)
-        self.assertEqual({i["symbol"]: i["status"] for i in wlist["items"]},
-                         {"005930.KS": "ok", "000660.KS": "ok", "AAPL": "unavailable"})
+        result = {i["symbol"]: i["status"] for i in wlist["items"]}
+        self.assertEqual(result["005930.KS"], "ok")
+        self.assertEqual(result["000660.KS"], "ok")
+        self.assertEqual(result["AAPL"], "unavailable")
 
     def test_garbage_prior_watchlist_is_ignored(self):
         for prior in (None, [], "x", {"items": "nope"}, {"items": [None, 3, {"symbol": "AAPL"}]}):
             wlist = wl.refresh_watchlist(make_fetcher(ALL_OK), prior, NOW_TS)
-            self.assertEqual(len(wlist["items"]), 3)
+            self.assertEqual(len(wlist["items"]), 18)
 
     def test_source_and_formula_version_are_recorded(self):
         wlist = wl.refresh_watchlist(make_fetcher(ALL_OK), None, NOW_TS)
         self.assertEqual(wlist["source"], "Yahoo Finance chart")
         self.assertEqual(wlist["formula"], wl.FORMULA_VERSION)
+        self.assertEqual(len(wlist["items"]), 18)
 
 
 class FetchDataIntegrationTests(unittest.TestCase):
@@ -690,12 +719,16 @@ class FetchDataIntegrationTests(unittest.TestCase):
         self.assertEqual(data["asOf"], before["asOf"])
         self.assertEqual(data["us"], before["us"])
         self.assertEqual(data["kr"], before["kr"])
-        self.assertEqual(len(data["watchlist"]["items"]), 3)
+        self.assertEqual(len(data["watchlist"]["items"]), 18)
         json.dumps(data, allow_nan=False)  # strictly valid JSON (no NaN/Infinity)
 
     def test_fetch_data_registers_watchlist_step(self):
         names = [n for n, _ in fetch_data.STEPS]
         self.assertIn("watchlist", names)
+        self.assertEqual(names[:6], ["hy", "vix", "trend_us", "real_yield", "fx", "cape"])
+
+    def test_fetch_data_step_order_unchanged(self):
+        names = [n for n, _ in fetch_data.STEPS]
         self.assertEqual(names[:6], ["hy", "vix", "trend_us", "real_yield", "fx", "cape"])
 
 
@@ -709,7 +742,7 @@ def fake_curl(status="200", seen=None, body_for=None):
         if seen is not None:
             seen.append(list(cmd))
         sym = _re.search(r"/chart/([^?]+)\?", cmd[-1])
-        body = json.dumps(ALL_OK[sym.group(1)]) if sym else (body_for or "legacy-body")
+        body = json.dumps(ALL_OK[sym.group(1)]) if sym and sym.group(1) in ALL_OK else (body_for or "legacy-body")
         return subprocess.CompletedProcess(cmd, 0, stdout=f"{body}\n{status}", stderr="")
     return run
 
@@ -727,7 +760,7 @@ class WatchlistNoRedirectTests(unittest.TestCase):
     def test_watchlist_command_has_no_follow_flag_and_keeps_https_only(self):
         seen = []
         run_default_watchlist_fetch(seen)
-        self.assertEqual(len(seen), 3)
+        self.assertEqual(len(seen), 18)
         for cmd in seen:
             flags = [a for a in cmd[:-1] if a.startswith("-") and not a.startswith("--")]
             self.assertFalse(any("L" in f for f in flags), msg=cmd)  # no -L / -sL
@@ -745,7 +778,7 @@ class WatchlistNoRedirectTests(unittest.TestCase):
 
     def test_watchlist_default_fetch_still_yields_ok_stocks(self):
         wlist = run_default_watchlist_fetch([])
-        self.assertEqual([i["status"] for i in wlist["items"]], ["ok", "ok", "ok"])
+        self.assertEqual([i["status"] for i in wlist["items"]], ["ok"] * 18)
 
     def test_redirect_status_is_never_accepted_as_stock_data(self):
         for status in ("301", "302", "303", "307", "308"):
@@ -950,7 +983,7 @@ class WatchlistTabTests(unittest.TestCase):
         self.page = page_for(ok_watchlist())
         self.pane = wl_pane(self.page)
 
-    def test_third_css_only_tab_exists_and_two_original_tabs_remain(self):
+    def test_third_tab_exists_and_two_original_tabs_remain(self):
         for needle in ('id="t-us"', 'id="t-kr"', 'id="t-wl"', 'for="t-wl"', "📌 관심 종목",
                        '#t-wl:checked ~ .content .pane-wl{display:block}',
                        '<section class="pane pane-us">', '<section class="pane pane-kr">',
@@ -958,7 +991,8 @@ class WatchlistTabTests(unittest.TestCase):
             self.assertIn(needle, self.page)
         self.assertEqual(self.page.count('type="radio"'), 3)
         self.assertIn('id="t-us" class="tabs-radio" checked', self.page)  # default tab unchanged
-        self.assertNotIn("<script", self.page.lower())
+        # Dialog behavior requires JS; must be in a <script> block, never inline event handlers
+        self.assertIn("<script", self.page.lower())
         self.assertNotRegex(self.page.lower(), r"\son[a-z]+=")
 
     def test_us_and_kr_panes_are_byte_identical_to_before(self):
@@ -967,26 +1001,45 @@ class WatchlistTabTests(unittest.TestCase):
         self.assertIn(gen.pane_html("us", d), self.page)
         self.assertIn(gen.pane_html("kr", d), self.page)
 
-    def test_exactly_three_cards_in_default_order(self):
+    def test_exactly_eighteen_compact_cards_in_order(self):
         cards = cards_of(self.page)
-        self.assertEqual(len(cards), 3)
+        self.assertEqual(len(cards), 18)
         for card, (sym, name) in zip(cards, wl.DEFAULT_WATCHLIST):
             self.assertIn(sym, card)
-            self.assertIn(name, card)
+            # name may be truncated — check at least partial Korean/English match
+            self.assertTrue(name[:4] in card or sym in card, f"{sym}: name or sym not in card")
 
-    def test_card_shows_score_label_price_returns_sma_rsi_volume_reasons_and_source_date(self):
+    def test_compact_card_shows_summary_fields(self):
+        """Compact card: name/symbol, score, label, price, 1-day return, freshness."""
         items = {i["symbol"]: i for i in ok_watchlist()["items"]}
-        for card, (sym, _) in zip(cards_of(self.page), wl.DEFAULT_WATCHLIST):
+        cards = cards_of(self.page)
+        # First card (005930.KS) and third card (AAPL) spot-checked
+        for idx, (sym, _) in [(0, ("005930.KS", "삼성전자")), (2, ("AAPL", "Apple"))]:
+            card = cards[idx]
             it = items[sym]
-            self.assertIn(f'>{it["score"]}<', card)
+            self.assertIn(f'{it["score"]}', card)
             self.assertIn(it["label"], card)
-            for token in ("1일", "20일", "SMA20", "SMA50", "SMA200", "RSI14", "거래량", "Yahoo Finance",
-                          it["src_date"]):
-                self.assertIn(token, card, msg=f"{sym}: {token}")
-            for chip in it["reasons"]:
-                self.assertIn(chip["text"].replace("&", "&amp;"), card)
-        self.assertIn("KRW", cards_of(self.page)[0])
-        self.assertIn("USD", cards_of(self.page)[2])
+            # price in card (formatted)
+            self.assertIn(sym, card)
+        self.assertIn("KRW", cards[0])
+        self.assertIn("USD", cards[2])
+
+    def test_detail_fields_are_in_dialog_json_data(self):
+        """Full detail (SMA20/50/200, RSI14, volume ratio, reasons, etc.) lives in the JSON data block."""
+        pane = wl_pane(self.page)
+        # JSON data block must exist
+        self.assertIn('id="wl-items"', pane)
+        start = pane.index('id="wl-items"')
+        block_start = pane.index('>', start) + 1
+        block_end = pane.index('</script>', block_start)
+        items_data = json.loads(pane[block_start:block_end])
+        self.assertEqual(len(items_data), 18)
+        ok_items = [i for i in items_data if i.get("status") == "ok"]
+        self.assertTrue(ok_items, "need at least one ok item in JSON data")
+        for field in ("close", "ret_1d", "ret_20d", "sma20", "sma50", "sma200",
+                      "rsi14", "volume_ratio", "src_date", "score", "label",
+                      "currency", "chips", "quality"):
+            self.assertIn(field, ok_items[0], f"detail field '{field}' missing from JSON data")
 
     def test_header_summary_and_rules_based_statement(self):
         self.assertIn("관심 종목 일일 리포트", self.pane)
@@ -999,7 +1052,7 @@ class WatchlistTabTests(unittest.TestCase):
         self.assertEqual(counts["관망"], sum(1 for i in items if i["label"] == "관망"))
         self.assertEqual(counts["주의"], sum(1 for i in items if i["label"] == "주의"))
         self.assertEqual(counts["데이터 없음"], 0)
-        self.assertEqual(sum(counts.values()), 3)
+        self.assertEqual(sum(counts.values()), 18)
 
     def test_no_ai_claim_anywhere(self):
         for banned in ("AI가 생성", "AI 분석 결과", "AI 리포트", "AI 추천", "인공지능", "GPT", "LLM"):
@@ -1011,6 +1064,8 @@ class WatchlistTabTests(unittest.TestCase):
     def test_no_invented_news_targets_or_advice(self):
         # the collapsed limits note may *state* that these are not covered; the cards/header must not mention them
         body = _re.sub(r'<details class="wformula".*?</details>', "", self.pane, flags=_re.S)
+        # 뉴스케일파워(SMR)는 종목명이라 허용 — 그 외 '뉴스' 언급은 금지
+        body = body.replace("뉴스케일파워", "").replace("\\uB274\\uC2A4", "")
         for banned in ("목표가", "뉴스", "실적", "사세요", "파세요", "촉매", "AI 분석 결과"):
             self.assertNotIn(banned, body)
         self.assertNotRegex(body, r"(?<!과)(매수|매도)")   # "과매도"(RSI 용어)는 허용, 매매 권유 단어는 금지
@@ -1039,6 +1094,18 @@ class WatchlistTabTests(unittest.TestCase):
         for rule in ("min-height:44px", "overflow-wrap:anywhere", "min-width:0"):
             self.assertIn(rule, self.page)
 
+    def test_compact_grid_has_two_columns_at_mobile_breakpoint(self):
+        """Mobile 360/390px default: 2 columns."""
+        self.assertIn("repeat(2,", self.page)
+
+    def test_compact_grid_has_four_columns_at_tablet_breakpoint(self):
+        """Tablet: 4 columns."""
+        self.assertIn("repeat(4,", self.page)
+
+    def test_compact_grid_has_six_columns_at_desktop_breakpoint(self):
+        """Desktop: 6 columns."""
+        self.assertIn("repeat(6,", self.page)
+
 
 def _html_escape(t):
     import html
@@ -1046,27 +1113,29 @@ def _html_escape(t):
 
 
 class WatchlistDegradedStateTests(unittest.TestCase):
-    def test_missing_watchlist_renders_three_unavailable_cards(self):
+    def test_missing_watchlist_renders_18_unavailable_cards(self):
         page = page_for(None)
         cards = cards_of(page)
-        self.assertEqual(len(cards), 3)
+        self.assertEqual(len(cards), 18)
         for card, (sym, name) in zip(cards, wl.DEFAULT_WATCHLIST):
             self.assertIn(sym, card)
             self.assertIn("데이터 없음", card)
             self.assertNotIn("/100", card)
             self.assertNotRegex(card, r"\d{4}-\d{2}-\d{2}")   # no invented source date
         counts = dict((k, int(v)) for v, k in _re.findall(r'class="wsum-item[^"]*"><b>(\d+)</b><span>(.*?)</span>', wl_pane(page)))
-        self.assertEqual(counts["데이터 없음"], 3)
+        self.assertEqual(counts["데이터 없음"], 18)
 
     def test_stale_card_keeps_original_date_and_fixed_reason_only(self):
         w = ok_watchlist()
         w["items"][2] = dict(w["items"][2], status="stale", error="fetch_failed", src_date="2026-11-06")
         page = page_for(w)
         card = cards_of(page)[2]
-        self.assertIn("2026-11-06", card)
+        self.assertIn("2026-11-06", card)          # compact card: original date + status pill
         self.assertIn("갱신 실패", card)
-        self.assertIn(wl.SAFE_ERRORS["fetch_failed"], card)
-        self.assertIn("이전 값", card)
+        detail = dialog_json(page)[2]              # popup detail: fixed reason + previous-value caveat
+        self.assertEqual(detail["src_date"], "2026-11-06")
+        self.assertIn(wl.SAFE_ERRORS["fetch_failed"], detail["warn"])
+        self.assertIn("이전 값", detail["warn"])
 
     def test_unknown_error_code_never_echoed(self):
         w = ok_watchlist()
@@ -1093,33 +1162,280 @@ class WatchlistDegradedStateTests(unittest.TestCase):
         page = page_for(w)
         for raw in ("<script>alert(1)", "<img src=x", "<b>bold</b>", "<i>x</i>", "<i>2026</i>", "<b>X</b>", "<u>우호</u>"):
             self.assertNotIn(raw, page)
-        self.assertEqual(len(cards_of(page)), 3)
+        self.assertEqual(len(cards_of(page)), 18)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", page)
         self.assertIn('id="t-wl"', page)       # placeholder collision (__KR__) did not corrupt the page
-        self.assertNotIn("__KR__", page.replace("&lt;script&gt;alert(1)&lt;/script&gt;__KR__", ""))
+        stripped = page.replace("&lt;script&gt;alert(1)&lt;/script&gt;__KR__", "")
+        stripped = stripped.replace("\\u003cscript\\u003ealert(1)\\u003c/script\\u003e__KR__", "")
+        self.assertNotIn("__KR__", stripped)
 
     def test_non_finite_and_wrong_typed_numbers_render_as_dash(self):
         w = ok_watchlist()
         w["items"][0] = dict(w["items"][0], sma50=float("nan"), rsi14=float("inf"), ret_20d="12", volume_ratio=True)
         page = page_for(w)
-        card = cards_of(page)[0]
-        self.assertNotRegex(card.lower(), r"\b(nan|inf|true)\b")
-        self.assertIn("—", card)
+        self.assertNotRegex(" ".join(cards_of(page)).lower(), r"\b(nan|infinity|inf|true)\b")
+        self.assertNotRegex(_re.search(r'id="wl-items">(.*?)</script>', page, _re.S).group(1), r"[:\[,](NaN|-?Infinity)[,\]}]")
+        detail = dialog_json(page)[0]              # missing numbers are dashes/null in the popup data
+        vals = {m["k"]: m["v"] for m in detail["metrics"]}
+        self.assertEqual((vals["SMA50"], vals["RSI14"], vals["20일"], vals["거래량"]), ("—",) * 4)
+        self.assertIsNone(detail["sma50"])
 
     def test_malformed_items_and_extra_items(self):
         w = ok_watchlist()
-        w["items"] = [None, "x", w["items"][2], dict(w["items"][0], symbol="MSFT", name="Microsoft")]
+        # Keep all items valid except first two; inject an extra unknown symbol
+        orig_items = list(w["items"])
+        w["items"] = [None, "x"] + orig_items[2:] + [dict(orig_items[0], symbol="MSFT", name="Microsoft")]
         page = page_for(w)
         cards = cards_of(page)
-        self.assertEqual(len(cards), 3)               # defaults only; extra MSFT ignored
+        self.assertEqual(len(cards), 18)               # defaults only; extra MSFT ignored
         self.assertNotIn("MSFT", page)
-        self.assertIn("데이터 없음", cards[0])
-        self.assertIn("데이터 없음", cards[1])
-        self.assertNotIn("데이터 없음", cards[2])
+        self.assertIn("데이터 없음", cards[0])    # 005930.KS — None
+        self.assertIn("데이터 없음", cards[1])    # 000660.KS — "x"
+        self.assertNotIn("데이터 없음", cards[2]) # AAPL — ok
 
     def test_asof_semantics_unchanged(self):
         page = page_for(ok_watchlist(), asOf="2026-11-14")
         self.assertEqual(page.count("데이터 기준 · <b>2026-11-14</b>"), 2)   # us + kr panes keep asOf
+
+
+# ── Slice 6: compact cards + single reusable <dialog> ───────────────────────
+def _script_blocks(html_text):
+    return _re.findall(r"<script([^>]*)>(.*?)</script>", html_text, _re.S)
+
+
+def behavior_js(html_text):
+    js = [body for attrs, body in _script_blocks(html_text) if "application/json" not in attrs]
+    assert len(js) == 1, f"expected exactly one behavior script, got {len(js)}"
+    return js[0]
+
+
+def dialog_json(html_text):
+    blocks = [body for attrs, body in _script_blocks(html_text) if "application/json" in attrs]
+    assert len(blocks) == 1
+    return json.loads(blocks[0])
+
+
+def wl_css(page):
+    return page[page.index("/* 관심 종목 탭 */"):page.index(".disclaimer{")]
+
+
+class CompactCardMarkupTests(unittest.TestCase):
+    def setUp(self):
+        self.page = page_for(ok_watchlist())
+        self.pane = wl_pane(self.page)
+        self.cards = cards_of(self.page)
+
+    def test_each_card_is_one_semantic_button_with_index_and_accessible_name(self):
+        for i, (card, (sym, name)) in enumerate(zip(self.cards, wl.DEFAULT_WATCHLIST)):
+            self.assertEqual(card.count("<button"), 1, sym)
+            self.assertIn('type="button"', card)
+            self.assertIn(f'data-idx="{i}"', card)
+            self.assertIn('aria-haspopup="dialog"', card)
+            self.assertRegex(card, r'aria-label="[^"]*' + _re.escape(sym))
+
+    def test_full_names_are_rendered_not_truncated_in_markup(self):
+        for card, (sym, name) in zip(self.cards, wl.DEFAULT_WATCHLIST):
+            self.assertIn(_html_escape(name), card)
+
+    def test_compact_card_omits_detail_metrics(self):
+        for card in self.cards:
+            for detail in ("SMA20", "SMA50", "SMA200", "RSI14", "wchips", "wgrid"):
+                self.assertNotIn(detail, card)
+
+    def test_compact_card_shows_return_price_and_freshness(self):
+        items = {i["symbol"]: i for i in ok_watchlist()["items"]}
+        card = self.cards[2]
+        self.assertIn(f'{items["AAPL"]["ret_1d"] * 100:+.1f}%', card)
+        self.assertIn("최신", card)
+        self.assertIn(f'{items["AAPL"]["close"]:,.2f}', card)
+
+    def test_unavailable_and_stale_status_visible_on_compact_card(self):
+        w = ok_watchlist()
+        w["items"][2] = dict(w["items"][2], status="stale", error="fetch_failed")
+        cards = cards_of(page_for(w))
+        self.assertIn("갱신 실패", cards[2])
+        self.assertIn("데이터 없음", cards_of(page_for(None))[0])
+
+    def test_cards_are_buttons_even_when_unavailable(self):
+        for card in cards_of(page_for(None)):
+            self.assertEqual(card.count("<button"), 1)
+
+
+class DialogMarkupTests(unittest.TestCase):
+    def setUp(self):
+        self.page = page_for(ok_watchlist())
+        self.pane = wl_pane(self.page)
+
+    def test_exactly_one_native_dialog(self):
+        self.assertEqual(self.page.count("<dialog"), 1)
+        self.assertEqual(self.pane.count("<dialog"), 1)
+        self.assertIn('aria-labelledby="wl-dlg-title"', self.pane)
+        self.assertNotIn("<div role=\"dialog\"", self.page)
+
+    def test_dialog_has_visible_labelled_close_button(self):
+        m = _re.search(r'<button[^>]*class="wl-close"[^>]*>(.*?)</button>', self.pane, _re.S)
+        self.assertIsNotNone(m)
+        self.assertIn('aria-label="닫기"', m.group(0))
+        self.assertIn('type="button"', m.group(0))
+        self.assertTrue(m.group(1).strip())
+
+    def test_dialog_has_slots_for_all_detail_content(self):
+        for slot in ("wl-dlg-title", "wl-dlg-sym", "wl-dlg-label", "wl-dlg-score", "wl-dlg-price",
+                     "wl-dlg-fresh", "wl-dlg-date", "wl-dlg-warn", "wl-dlg-metrics",
+                     "wl-dlg-chips", "wl-dlg-foot"):
+            self.assertIn(f'id="{slot}"', self.pane)
+
+    def test_noscript_explains_detail_requires_js(self):
+        self.assertRegex(self.pane, r"<noscript>.*?JavaScript.*?</noscript>")
+
+    def test_json_has_one_entry_per_symbol_in_order_with_detail_metrics(self):
+        data = dialog_json(self.page)
+        self.assertEqual([d["symbol"] for d in data], [s for s, _ in wl.DEFAULT_WATCHLIST])
+        self.assertEqual([d["name"] for d in data], [n for _, n in wl.DEFAULT_WATCHLIST])
+        d = data[2]
+        labels = [m["k"] for m in d["metrics"]]
+        self.assertEqual(labels, ["1일", "20일", "SMA20", "SMA50", "SMA200", "RSI14", "거래량"])
+        self.assertTrue(d["chips"])
+        self.assertEqual(d["src_date"], "2026-11-13")
+        self.assertIn("Yahoo Finance", d["foot"])
+
+    def test_json_block_cannot_break_out_of_script(self):
+        w = ok_watchlist()
+        w["items"][0] = dict(w["items"][0], name="</script><script>alert(1)</script>",
+                             reasons=[{"text": "</script><b>x", "tone": "pos"}, {"text": "&<>", "tone": "neu"}])
+        page = page_for(w)
+        self.assertNotIn("</script><script>alert(1)", page)
+        self.assertEqual(len(_script_blocks(page)), 2)
+        data = dialog_json(page)  # still parses
+        self.assertEqual(len(data), 18)
+
+    def test_skhy_sma200_is_explicitly_missing_not_fabricated(self):
+        data = dialog_json(self.page)
+        skhy = next(d for d in data if d["symbol"] == "SKHY")
+        sma200 = next(m for m in skhy["metrics"] if m["k"] == "SMA200")
+        self.assertEqual(sma200["v"], "—")
+        self.assertIn("누락", skhy["warn"])
+        item ={i["symbol"]: i for i in ok_watchlist()["items"]}["SKHY"]
+        self.assertEqual((item["quality"], item["sma200"]), ("partial", None))
+        self.assertLessEqual(item["score"], wl.PARTIAL_SCORE_CAP)
+
+
+class DialogScriptTests(unittest.TestCase):
+    def setUp(self):
+        self.page = page_for(ok_watchlist())
+        self.js = behavior_js(self.page)
+
+    def test_no_innerhtml_or_unsafe_sinks(self):
+        for bad in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(",
+                    "new Function", "srcdoc"):
+            self.assertNotIn(bad, self.js)
+        self.assertIn("textContent", self.js)
+        self.assertIn("JSON.parse", self.js)
+
+    def test_script_has_no_network_or_tracking(self):
+        for bad in ("fetch(", "XMLHttpRequest", "sendBeacon", "localStorage", "document.cookie", "http://", "https://"):
+            self.assertNotIn(bad, self.js)
+
+    def test_uses_native_modal_api_and_single_dialog_lookup(self):
+        self.assertIn("showModal()", self.js)
+        self.assertIn("wl-dialog", self.js)
+        self.assertEqual(self.js.count("showModal()"), 1)
+
+    def test_close_paths_button_backdrop_and_escape_cancel(self):
+        self.assertIn("wl-close", self.js)
+        self.assertIn(".close()", self.js)
+        self.assertIn("e.target === dlg", self.js)          # backdrop click
+        self.assertIn("'close'", self.js)                   # Escape also fires native close event
+        self.assertNotIn("preventDefault", self.js)         # never swallow Escape (cancel)
+
+    def test_focus_restoration_and_scroll_lock(self):
+        self.assertIn(".focus()", self.js)
+        self.assertIn("overflow", self.js)
+        self.assertIn("'hidden'", self.js)
+        self.assertRegex(self.js, r"overflow\s*=\s*''")
+
+    def test_no_inline_handlers_in_markup(self):
+        self.assertNotRegex(self.page.lower(), r"\son[a-z]+=")
+        self.assertNotIn("javascript:", self.page.lower())
+
+
+class CompactCssTests(unittest.TestCase):
+    def setUp(self):
+        self.page = page_for(ok_watchlist())
+        self.css = wl_css(self.page)
+
+    def test_mobile_default_two_columns_then_four_then_six(self):
+        self.assertRegex(self.css, r"\.wlist\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)")
+        m4 = _re.search(r"@media\(min-width:(\d+)px\)\{\.wlist\{[^}]*repeat\(4,", self.css)
+        m6 = _re.search(r"@media\(min-width:(\d+)px\)\{\.wlist\{[^}]*repeat\(6,", self.css)
+        self.assertIsNotNone(m4)
+        self.assertIsNotNone(m6)
+        self.assertLessEqual(int(m4.group(1)), 768)
+        self.assertGreater(int(m4.group(1)), 390)
+        self.assertGreater(int(m6.group(1)), int(m4.group(1)))
+        self.assertLessEqual(int(m6.group(1)), 1100)
+
+    def test_card_button_min_target_44px_and_wrapping_guards(self):
+        btn = _re.search(r"\.wbtn\{([^}]*)\}", self.css).group(1)
+        self.assertIn("min-height:44px", btn)
+        self.assertIn("min-width:0", btn)
+        self.assertIn("overflow-wrap:anywhere", self.css)
+        close = _re.search(r"\.wl-close\{([^}]*)\}", self.css).group(1)
+        self.assertIn("min-height:44px", close)
+        self.assertIn("min-width:44px", close)
+
+    def test_name_is_clamped_safely(self):
+        self.assertRegex(self.css, r"\.wname\{[^}]*-webkit-line-clamp:2")
+
+    def test_dialog_is_mobile_friendly_scrolls_and_has_safe_area(self):
+        self.assertRegex(self.css, r"\.wdlg\{[^}]*max-height:")
+        self.assertRegex(self.css, r"\.wdlg\{[^}]*overflow-y:auto")
+        self.assertIn("env(safe-area-inset-bottom)", self.css)
+        self.assertIn(".wdlg::backdrop", self.css)
+
+    def test_no_font_size_below_12px_anywhere_in_watchlist_css(self):
+        sizes = [float(x) for x in _re.findall(r"font-size:([\d.]+)px", self.css)]
+        self.assertGreaterEqual(min(sizes), 12.0)
+
+
+class UsKrUnchangedTests(unittest.TestCase):
+    def test_us_kr_panes_identical_with_and_without_watchlist(self):
+        d = repo_data()
+        with_wl = gen.build_page(dict(d, watchlist=ok_watchlist()))
+        without = gen.build_page({k: v for k, v in d.items() if k != "watchlist"})
+        for mkt in ("us", "kr"):
+            pane = gen.pane_html(mkt, d)
+            self.assertIn(pane, with_wl)
+            self.assertIn(pane, without)
+        self.assertEqual(with_wl.count("<dialog"), 1)
+
+
+class EighteenFetchIsolationTests(unittest.TestCase):
+    def test_each_single_failure_is_isolated_across_all_18(self):
+        syms = [s for s, _ in wl.DEFAULT_WATCHLIST]
+        for bad in syms:
+            outcomes = dict(ALL_OK)
+            outcomes[bad] = ConnectionError("down")
+            out = wl.refresh_watchlist(make_fetcher(outcomes), None, NOW_TS)["items"]
+            self.assertEqual({i["symbol"]: i["status"] for i in out},
+                             {s: ("unavailable" if s == bad else "ok") for s in syms}, bad)
+
+    def test_skhy_short_history_is_partial_and_status_ok(self):
+        item = {i["symbol"]: i for i in ok_watchlist()["items"]}["SKHY"]
+        self.assertEqual((item["status"], item["quality"], item["sma200"]), ("ok", "partial", None))
+        self.assertIsNotNone(item["sma50"])
+
+    def test_all_18_states_render_for_fresh_stale_unavailable(self):
+        w = ok_watchlist()
+        w["items"][3] = dict(w["items"][3], status="stale", error="fetch_failed")
+        w["items"][4] = wl.unavailable_stock("CPER", "CPER")
+        w["items"][5] = dict(w["items"][5], src_date="2026-11-01")
+        cards = cards_of(page_for(w))
+        self.assertEqual(len(cards), 18)
+        self.assertIn("갱신 실패", cards[3])
+        self.assertIn("데이터 없음", cards[4])
+        self.assertIn("지연", cards[5])
+        self.assertIn("최신", cards[0])
 
 
 # ── Slice 5: workflow runs the deterministic tests before fetch/generate ────

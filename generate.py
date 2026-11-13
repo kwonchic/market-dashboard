@@ -4,8 +4,8 @@
 시장 신호 대시보드 — Phase 2 제너레이터 (규칙 엔진 · 정적 렌더링판)
 - 네트워크 접속 없음(순수 계산). 데이터는 data.json에서 읽는다.
 - 실행: python3 generate.py  ->  dashboard.html 생성
-- 중요: 모바일 미리보기가 인라인 JS를 실행하지 않으므로, 데이터를 HTML에 직접 박아 렌더링한다.
-        탭 전환/설명 펼치기/보조지표는 모두 순수 CSS(라디오+details)로 처리 → JS 0줄.
+- 중요: 데이터를 HTML에 직접 박아 렌더링하고, 탭 전환·설명 펼치기는 순수 CSS로 처리한다.
+        관심 종목 상세 팝업만 외부 통신 없는 최소 인라인 JS를 사용한다.
 """
 import json, os, re, html as _html
 
@@ -446,18 +446,13 @@ def _wview(item, symbol, name):
     return dict(item, name=nm if isinstance(nm, str) and 0 < len(nm) <= 40 else name)
 
 
-def _wchips(reasons):
+def _wchip_list(reasons):
     out = []
     for c in (reasons if isinstance(reasons, list) else [])[:wl.MAX_CHIPS]:
         if isinstance(c, dict) and isinstance(c.get("text"), str):
             tone = c.get("tone") if c.get("tone") in ("pos", "neg", "neu") else "neu"
-            out.append(f'<li class="{tone}">{_e(c["text"][:80])}</li>')
-    return "".join(out)
-
-
-def _wmetric(key, val, tone="", sub=""):
-    sub_html = f'<small>{_e(sub)}</small>' if sub else ""
-    return f'<div class="wm"><span class="wk">{_e(key)}</span><span class="wv {tone}">{_e(val)}</span>{sub_html}</div>'
+            out.append({"text": c["text"][:80], "tone": tone})
+    return out
 
 
 def _wsma(close, avg):
@@ -472,24 +467,28 @@ def _wsma(close, avg):
     return "■ 같음 +0.0%", ""
 
 
-def _wcard_html(v, symbol, name, as_of):
-    sym = _e(symbol)
+W_FOOT = "출처 Yahoo Finance chart · 일봉 {n}개 · 지연·누락 가능"
+
+
+def _wdetail(v, symbol, name, as_of):
+    """카드 1개의 화면용 값(압축 카드 + 팝업 공용). 모든 값은 화이트리스트/서식 문자열이며 팝업에는 textContent로만 들어간다."""
     if v is None:
-        reason = ""
-        return (f'<article class="wcard w-na"><header class="whead"><div class="wid"><b class="wname">{_e(name)}</b>'
-                f'<span class="wsym">{sym}</span></div><div class="wscore"><span class="wlabel">데이터 없음</span>'
-                f'<span class="wnum"><b>—</b></span></div></header>'
-                f'<p class="wwarn">표시할 데이터가 없습니다. 값을 만들어 채우지 않으며, 다음 갱신 때 다시 조회합니다.{reason}</p>'
-                f'<footer class="wfoot">출처 Yahoo Finance chart · 기준일 — · 지연·누락 가능</footer></article>')
+        return {"symbol": symbol, "name": name, "status": "unavailable", "state": "unavailable",
+                "cls": "w-na", "label": "데이터 없음", "score": None, "score_text": "—",
+                "price": "—", "currency": "", "ret": "—", "ret_tone": "", "fresh": "데이터 없음", "src_date": None,
+                "warn": "표시할 데이터가 없습니다. 값을 만들어 채우지 않으며, 다음 갱신 때 다시 조회합니다.", "warn_soft": False,
+                "quality": None, "close": None, "ret_1d": None, "ret_20d": None, "sma20": None, "sma50": None,
+                "sma200": None, "rsi14": None, "volume_ratio": None, "metrics": [], "chips": [],
+                "foot": "출처 Yahoo Finance chart · 기준일 — · 지연·누락 가능"}
     state, age = wl.freshness(v, as_of)
     fresh_txt = W_FRESH_TEXT[state] + (f" {age}일" if state == "delayed" and age is not None else "")
     cur = v.get("currency") if isinstance(v.get("currency"), str) and wl.CURRENCY_RE.fullmatch(v["currency"]) else ""
-    warn = ""
+    warn, soft = "", False
     if v["status"] == "stale":
         why = wl.SAFE_ERRORS.get(v.get("error"), wl.SAFE_ERRORS["fetch_failed"])
-        warn = (f'<p class="wwarn">⚠ 갱신 실패 · {_e(why)} · 이전 값 표시 중 (기준일 {_e(v["src_date"])} 그대로)</p>')
+        warn = f'⚠ 갱신 실패 · {why} · 이전 값 표시 중 (기준일 {v["src_date"]} 그대로)'
     elif v.get("quality") == "partial":
-        warn = '<p class="wwarn soft">일부 지표 누락 · 없는 항목은 중립으로 처리하고 우호는 제한했습니다.</p>'
+        warn, soft = "일부 지표 누락 · 없는 항목은 중립으로 처리하고 우호는 제한했습니다.", True
     close = v["close"]
     s20, t20 = _wsma(close, v.get("sma20"))
     s50, t50 = _wsma(close, v.get("sma50"))
@@ -498,23 +497,100 @@ def _wcard_html(v, symbol, name, as_of):
     rsi_tag = "—" if rsi is None else (f"{rsi:.0f} · 과열" if rsi >= wl.RSI_OVERBOUGHT else
                                       (f"{rsi:.0f} · 과매도" if rsi <= wl.RSI_OVERSOLD else f"{rsi:.0f} · 중립"))
     vr = _wnum(v.get("volume_ratio"))
-    metrics = "".join([
-        _wmetric("1일", _wpct(v.get("ret_1d")), _wtone(v.get("ret_1d"))),
-        _wmetric("20일", _wpct(v.get("ret_20d")), _wtone(v.get("ret_20d"))),
-        _wmetric("SMA20", s20, t20), _wmetric("SMA50", s50, t50), _wmetric("SMA200", s200, t200),
-        _wmetric("RSI14", rsi_tag), _wmetric("거래량", "—" if vr is None else f"평균 {vr:.1f}배"),
-    ])
-    return (f'<article class="wcard {W_LABEL_CLASS[v["label"]]}">'
-            f'<header class="whead"><div class="wid"><b class="wname">{_e(v["name"])}</b><span class="wsym">{sym}</span></div>'
-            f'<div class="wscore"><span class="wlabel">{_e(v["label"])}</span>'
-            f'<span class="wnum"><b>{v["score"]}</b><small>/100</small></span></div></header>'
-            f'<div class="wprice"><b>{_e(_wprice(close, cur))}</b><span>{_e(cur)}</span></div>'
-            f'<div class="wmeta"><span class="wfresh {state}">{_e(fresh_txt)}</span>'
-            f'<span>기준일 {_e(v["src_date"])}</span></div>'
-            f'{warn}<div class="wgrid">{metrics}</div>'
-            f'<ul class="wchips">{_wchips(v.get("reasons"))}</ul>'
-            f'<footer class="wfoot">출처 Yahoo Finance chart · 일봉 {_e(str(v.get("points") if isinstance(v.get("points"), int) else "—"))}개 · 지연·누락 가능</footer>'
-            f'</article>')
+    metrics = [
+        {"k": "1일", "v": _wpct(v.get("ret_1d")), "tone": _wtone(v.get("ret_1d"))},
+        {"k": "20일", "v": _wpct(v.get("ret_20d")), "tone": _wtone(v.get("ret_20d"))},
+        {"k": "SMA20", "v": s20, "tone": t20}, {"k": "SMA50", "v": s50, "tone": t50},
+        {"k": "SMA200", "v": s200, "tone": t200},
+        {"k": "RSI14", "v": rsi_tag, "tone": ""},
+        {"k": "거래량", "v": "—" if vr is None else f"평균 {vr:.1f}배", "tone": ""},
+    ]
+    pts = v.get("points") if isinstance(v.get("points"), int) and not isinstance(v.get("points"), bool) else None
+    return {"symbol": symbol, "name": v["name"], "status": v["status"], "state": state,
+            "cls": W_LABEL_CLASS[v["label"]], "label": v["label"], "score": v["score"],
+            "score_text": f'{v["score"]} / 100', "price": _wprice(close, cur), "currency": cur,
+            "ret": _wpct(v.get("ret_1d")), "ret_tone": _wtone(v.get("ret_1d")), "fresh": fresh_txt,
+            "src_date": v["src_date"], "warn": warn, "warn_soft": soft,
+            "quality": v.get("quality"), "close": _wnum(close), "ret_1d": _wnum(v.get("ret_1d")),
+            "ret_20d": _wnum(v.get("ret_20d")), "sma20": _wnum(v.get("sma20")), "sma50": _wnum(v.get("sma50")),
+            "sma200": _wnum(v.get("sma200")), "rsi14": rsi, "volume_ratio": vr,
+            "metrics": metrics, "chips": _wchip_list(v.get("reasons")),
+            "foot": W_FOOT.format(n="—" if pts is None else pts)}
+
+
+def _wcard_html(d, idx):
+    """압축 요약 카드: 이름/심볼 · 점수+라벨 · 가격 · 1일 수익률 · 신선도. 카드 전체가 하나의 <button>."""
+    sym, name = _e(d["symbol"]), _e(d["name"])
+    score = "—" if d["score"] is None else str(d["score"])
+    aria = f'{name} ({sym}) 상세 보기, {_e(d["label"])}' + ("" if d["score"] is None else f" {score}점")
+    date = f'<span class="wdate">{_e(d["src_date"])}</span>' if d["src_date"] else ""
+    price = (f'<span class="wprice"><b>{_e(d["price"])}</b><span>{_e(d["currency"])}</span></span>'
+             if d["status"] != "unavailable" else '<span class="wprice"><b>—</b></span>')
+    ret = f'<span class="wret {d["ret_tone"]}">1일 {_e(d["ret"])}</span>' if d["status"] != "unavailable" else ""
+    return (f'<article class="wcard {d["cls"]}"><button type="button" class="wbtn" data-idx="{idx}" '
+            f'aria-haspopup="dialog" aria-label="{aria}">'
+            f'<span class="wname">{name}</span><span class="wsym">{sym}</span>'
+            f'<span class="wscore"><span class="wlabel">{_e(d["label"])}</span><span class="wnum">{score}</span></span>'
+            f'{price}{ret}'
+            f'<span class="wmeta"><span class="wfresh {d["state"]}">{_e(d["fresh"])}</span>{date}</span>'
+            f'</button></article>')
+
+
+def _json_for_script(obj):
+    """<script type="application/json"> 안에 안전하게 넣는 JSON. <, >, &, 줄구분자를 이스케이프해 </script> 탈출을 막는다."""
+    txt = json.dumps(obj, ensure_ascii=True, allow_nan=False, separators=(",", ":"))
+    return txt.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+W_DIALOG = """<dialog id="wl-dialog" class="wdlg" aria-labelledby="wl-dlg-title">
+    <div class="wdlg-in">
+      <div class="wdlg-head">
+        <div class="wid"><h2 id="wl-dlg-title" class="wdlg-name"></h2><span id="wl-dlg-sym" class="wsym"></span></div>
+        <button type="button" class="wl-close" aria-label="닫기">✕ 닫기</button>
+      </div>
+      <div class="wdlg-score"><span id="wl-dlg-label" class="wlabel"></span><span id="wl-dlg-score" class="wnum"></span></div>
+      <div class="wprice"><b id="wl-dlg-price"></b><span id="wl-dlg-cur"></span></div>
+      <div class="wmeta"><span id="wl-dlg-fresh" class="wfresh"></span><span id="wl-dlg-date"></span></div>
+      <p id="wl-dlg-warn" class="wwarn" hidden></p>
+      <div id="wl-dlg-metrics" class="wgrid"></div>
+      <ul id="wl-dlg-chips" class="wchips"></ul>
+      <footer id="wl-dlg-foot" class="wfoot"></footer>
+    </div>
+  </dialog>"""
+
+# 팝업 동작 JS: 데이터는 JSON.parse → textContent/createElement로만 DOM에 넣는다(HTML 문자열 주입 없음).
+W_SCRIPT = """(function(){
+var dlg=document.getElementById('wl-dialog'),src=document.getElementById('wl-items'),list=document.getElementById('wl-list');
+if(!dlg||!src||!list||typeof dlg.showModal!=='function')return;
+var items;try{items=JSON.parse(src.textContent)}catch(err){return}
+var opener=null;
+function el(id){return document.getElementById(id)}
+function txt(id,t){el(id).textContent=t==null?'':String(t)}
+function fill(d){
+txt('wl-dlg-title',d.name);txt('wl-dlg-sym',d.symbol);
+txt('wl-dlg-label',d.label);el('wl-dlg-label').className='wlabel '+d.cls;
+txt('wl-dlg-score',d.score_text);txt('wl-dlg-price',d.price);txt('wl-dlg-cur',d.currency);
+txt('wl-dlg-fresh',d.fresh);el('wl-dlg-fresh').className='wfresh '+d.state;
+txt('wl-dlg-date','기준일 '+(d.src_date||'—'));
+var w=el('wl-dlg-warn');w.textContent=d.warn||'';w.hidden=!d.warn;w.className='wwarn'+(d.warn_soft?' soft':'');
+var m=el('wl-dlg-metrics');m.textContent='';
+d.metrics.forEach(function(x){var b=document.createElement('div');b.className='wm';
+var k=document.createElement('span');k.className='wk';k.textContent=x.k;
+var v=document.createElement('span');v.className='wv '+x.tone;v.textContent=x.v;
+b.appendChild(k);b.appendChild(v);m.appendChild(b)});
+var c=el('wl-dlg-chips');c.textContent='';
+d.chips.forEach(function(x){var li=document.createElement('li');li.className=x.tone;li.textContent=x.text;c.appendChild(li)});
+txt('wl-dlg-foot',d.foot);
+}
+list.addEventListener('click',function(e){
+var b=e.target.closest('button[data-idx]');if(!b)return;
+var d=items[Number(b.getAttribute('data-idx'))];if(!d)return;
+fill(d);opener=b;document.body.style.overflow='hidden';dlg.showModal();dlg.scrollTop=0;
+});
+dlg.querySelector('.wl-close').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){if(e.target === dlg)dlg.close()});
+dlg.addEventListener('close',function(){document.body.style.overflow='';if(opener){opener.focus();opener=null}});
+})();"""
 
 
 def watchlist_pane_html(data):
@@ -523,7 +599,8 @@ def watchlist_pane_html(data):
     by_sym = {i.get("symbol"): i for i in raw if isinstance(i, dict) and isinstance(i.get("symbol"), str)}
     as_of = str(data.get("asOf", ""))
     views = [(sym, name, _wview(by_sym.get(sym), sym, name)) for sym, name in wl.DEFAULT_WATCHLIST]
-    cards = "".join(_wcard_html(v, sym, name, as_of) for sym, name, v in views)
+    details = [_wdetail(v, sym, name, as_of) for sym, name, v in views]
+    cards = "".join(_wcard_html(d, i) for i, d in enumerate(details))
     counts = {k: 0 for k in (*wl.LABELS, "데이터 없음")}
     states = []
     dates = []
@@ -547,13 +624,17 @@ def watchlist_pane_html(data):
     limits = "".join(f"<li>{_e(t)}</li>" for t in W_LIMITS)
     return f"""<section class="pane pane-wl">
   <div class="hero whero">
-    <div class="eyebrow">관심 종목 · 3개 고정</div>
+    <div class="eyebrow">관심 종목 · {len(wl.DEFAULT_WATCHLIST)}개 고정</div>
     <h2 class="wtitle">관심 종목 일일 리포트</h2>
     <div class="wasof">최신 데이터 · <b>{_e(latest)}</b> <span class="wfresh {overall}">{_e(otxt)}</span></div>
     <p class="wnote">AI 분석이 아닌 규칙 기반 계산이며 투자 조언이 아닙니다. 가격·이동평균·RSI·거래량만으로 매기는 점수라 참고용입니다.</p>
     <div class="wsum">{strip}</div>
   </div>
-  <div class="wlist">{cards}</div>
+  <div class="wlist" id="wl-list">{cards}</div>
+  <noscript><p class="wnote">종목 카드를 눌러 보는 상세 팝업은 JavaScript가 필요합니다. 카드의 요약(점수·가격·1일 수익률·기준일)은 그대로 볼 수 있습니다.</p></noscript>
+  {W_DIALOG}
+  <script type="application/json" id="wl-items">{_json_for_script(details)}</script>
+  <script>{W_SCRIPT}</script>
   <details class="wformula"><summary>점수 산정 방식 · 데이터 한계</summary>
     <div class="wf-body">
       <b>점수 공식 (v{wl.FORMULA_VERSION})</b><ol>{rules}</ol>
@@ -564,7 +645,7 @@ def watchlist_pane_html(data):
   <div class="srcs">SRC · Yahoo Finance chart(일봉 1년) · 규칙 기반 계산 · 갱신은 다른 탭과 동일한 스케줄</div>
 </section>"""
 
-# ── 4) 페이지 (JS 0줄, 라디오+CSS 탭) ───────────────────────────────────
+# ── 4) 페이지 (라디오+CSS 탭, 관심 종목 팝업만 최소 JS) ──────────────────
 PAGE = '''<!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -656,17 +737,34 @@ PAGE = '''<!DOCTYPE html>
   .wsum-item.w-fav b{color:var(--green)}.wsum-item.w-wait b{color:var(--steel)}.wsum-item.w-warn b{color:var(--amber)}.wsum-item.w-na b{color:var(--dim)}
   .wfresh{display:inline-block;font-family:var(--mono);font-size:12px;border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--mid);margin-left:4px}
   .wfresh.fresh{color:var(--green);border-color:rgba(79,178,134,.4)}.wfresh.delayed,.wfresh.unknown{color:var(--amber);border-color:rgba(217,164,65,.4)}.wfresh.stale{color:var(--red);border-color:rgba(224,106,92,.4)}
-  .wlist{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:14px}@media(min-width:900px){.wlist{grid-template-columns:repeat(3,minmax(0,1fr))}}
-  .wcard{min-width:0;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:15px 15px 13px;position:relative;overflow:hidden}
+  .wlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
+  @media(min-width:600px){.wlist{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  @media(min-width:960px){.wlist{grid-template-columns:repeat(6,minmax(0,1fr))}}
+  .wcard{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);position:relative;overflow:hidden}
   .wcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--dim)}
   .wcard.w-fav::before{background:var(--green)}.wcard.w-wait::before{background:var(--steel)}.wcard.w-warn::before{background:var(--amber)}
-  .whead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.wid{min-width:0}
-  .wname{display:block;font-size:17px;font-weight:600;line-height:1.3}.wsym{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
-  .wscore{text-align:right;flex:none}.wlabel{display:block;font-family:var(--disp);font-weight:700;font-size:24px;line-height:1.1}
-  .w-fav .wlabel{color:var(--green)}.w-wait .wlabel{color:var(--steel)}.w-warn .wlabel{color:var(--amber)}.w-na .wlabel{color:var(--dim);font-size:18px}
-  .wnum{font-family:var(--mono);font-size:13px;color:var(--mid)}.wnum b{font-size:20px;color:var(--hi);font-weight:600}.wnum small{font-size:12px;color:var(--dim)}
-  .wprice{margin-top:10px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.wprice b{font-family:var(--disp);font-size:26px;font-weight:700;letter-spacing:-.01em}.wprice span{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
-  .wmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-family:var(--mono);font-size:12px;color:var(--mid)}.wmeta .wfresh{margin-left:0}
+  .wbtn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;min-width:0;min-height:44px;height:100%;padding:11px 10px 10px 13px;
+    background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}
+  .wbtn:hover{background:rgba(95,168,196,.06)}.wbtn:focus-visible,.wl-close:focus-visible{outline:2px solid var(--steel);outline-offset:-2px}
+  .wname{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font-size:14px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+  .wsym{font-family:var(--mono);font-size:12px;color:var(--dim);max-width:100%;overflow-wrap:anywhere}
+  .wscore{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .wlabel{font-family:var(--disp);font-weight:700;font-size:16px;line-height:1.1}
+  .w-fav .wlabel,.wlabel.w-fav{color:var(--green)}.w-wait .wlabel,.wlabel.w-wait{color:var(--steel)}.w-warn .wlabel,.wlabel.w-warn{color:var(--amber)}.w-na .wlabel,.wlabel.w-na{color:var(--dim)}
+  .wnum{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--hi)}
+  .wprice{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;margin-top:2px}.wprice b{font-family:var(--disp);font-size:16px;font-weight:700;overflow-wrap:anywhere}.wprice span{font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .wret{font-family:var(--mono);font-size:13px;color:var(--mid)}.wret.pos{color:var(--green)}.wret.neg{color:var(--red)}
+  .wmeta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:4px;font-family:var(--mono);font-size:12px;color:var(--mid)}.wmeta .wfresh{margin-left:0}
+  .wdate{font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .wdlg{width:calc(100% - 24px);max-width:520px;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;padding:0;margin:auto;
+    border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--hi)}
+  .wdlg::backdrop{background:rgba(5,8,12,.72)}
+  .wdlg-in{padding:16px 16px calc(16px + env(safe-area-inset-bottom));min-width:0;overflow-wrap:anywhere}
+  .wdlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.wid{min-width:0}
+  .wdlg-name{font-size:20px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+  .wl-close{flex:none;min-height:44px;min-width:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);color:var(--hi);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+  .wdlg-score{display:flex;align-items:baseline;gap:10px;margin-top:10px}.wdlg-score .wlabel{font-size:24px}.wdlg .wprice b{font-size:26px}
+  .wfresh.unavailable{color:var(--dim)}
   .wwarn{margin-top:10px;font-size:13px;line-height:1.5;color:var(--red);background:rgba(224,106,92,.08);border:1px solid rgba(224,106,92,.3);border-radius:8px;padding:8px 10px}
   .wwarn.soft{color:var(--amber);background:rgba(217,164,65,.08);border-color:rgba(217,164,65,.3)}
   .wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}

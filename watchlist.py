@@ -285,7 +285,14 @@ def score_indicators(ind):
 
 
 # ── 종목 객체 · 종목별 독립 갱신 ─────────────────────────────────────────
-DEFAULT_WATCHLIST = (("005930.KS", "삼성전자"), ("000660.KS", "SK하이닉스"), ("AAPL", "Apple"))
+DEFAULT_WATCHLIST = (
+    ("005930.KS", "삼성전자"), ("000660.KS", "SK하이닉스"), ("AAPL", "Apple"),
+    ("FLNC", "플루언스 에너지"), ("CPER", "CPER"), ("CRCL", "써클 인터넷 그룹"),
+    ("SKHY", "SK하이닉스 ADR"), ("NTRA", "나테라"), ("BMNR", "비트마인 이머션 테크놀로지스"),
+    ("NEE", "넥스트에라 에너지"), ("NU", "누 홀딩스"), ("ALAB", "아스테라 랩스"),
+    ("VRT", "버티브 홀딩스"), ("NVTS", "나비타스 세미컨덕터"), ("QBTS", "디웨이브 퀀텀"),
+    ("SMR", "뉴스케일파워"), ("COHR", "코히런트"), ("CRDO", "크레도 테크놀로지 그룹 홀딩"),
+)
 SOURCE_NAME = "Yahoo Finance chart"
 FORMULA_VERSION = 1
 

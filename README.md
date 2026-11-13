@@ -2,7 +2,7 @@
 
 미국·국내 증시의 객관적 지표를 정해진 기준값에 대조해
 "사 모으기 / 보유 / 조금씩 매도 / 전량 매도" 판단을 자동 산출하는 정적 대시보드.
-세 번째 탭 **📌 관심 종목**은 3개 종목의 일일 기술 지표를 **규칙 기반(결정론)**으로 요약합니다.
+세 번째 탭 **📌 관심 종목**은 18개 종목의 일일 기술 지표를 **규칙 기반(결정론)**으로 요약합니다.
 
 **공개 URL:** https://kwonchic.github.io/market-dashboard/
 
@@ -10,21 +10,24 @@
 
 ```
 fetch_data.py ──▶ data.json ──▶ generate.py ──▶ dashboard.html ──▶ index.html (Pages 게시)
- (지표 수집)      (현재값)       (규칙 엔진)      (정적 HTML, JS 0줄)
+ (지표 수집)      (현재값)       (규칙 엔진)      (정적 HTML)
       │                              ▲
       └── watchlist.py ──────────────┘   (관심 종목: URL 검증·정규화·지표·점수·신선도, 표준 라이브러리만)
 ```
 
 - **자동 수집** (매일 21:30 KST 등, GitHub Actions): HY OAS·VIX·S&P 200일선(FRED CSV), CAPE(multpl), USD/KRW(open.er-api), 관심 종목(Yahoo chart)
 - **수동 유지** (무료 소스 없음): us.breadth, kr.valuation, kr.flows, kr.bok, kr.vol — `data.json`에서 직접 수정
-- **탭 3개**: 미국 · 국내 · 관심 종목 — 순수 CSS(라디오+details), JS 0줄
+- **탭 3개**: 미국 · 국내 · 관심 종목 — 탭 전환은 순수 CSS(라디오+details). JS는 관심 종목 상세 팝업 하나에만 사용(약 30줄, 외부 통신·추적 없음)
 - 워크플로는 `fetch_data.py`/`generate.py` 전에 `python3 -m unittest discover -s tests -v`를 실행합니다(실패 시 중단).
 - 로컬 실행: `python3 fetch_data.py && python3 generate.py && cp dashboard.html index.html` (외부 의존성 없음, curl만 사용)
 - 테스트: `python3 -m unittest discover -s tests -v` (네트워크 불필요, 로컬 fixture 사용)
 
 ## 관심 종목 리포트 (규칙 기반 · AI 아님)
 
-기본 종목(`watchlist.py`의 `DEFAULT_WATCHLIST`): `005930.KS` 삼성전자 · `000660.KS` SK하이닉스 · `AAPL` Apple.
+기본 종목 18개(`watchlist.py`의 `DEFAULT_WATCHLIST`, 이 순서): `005930.KS` 삼성전자 · `000660.KS` SK하이닉스 · `AAPL` Apple · `FLNC` 플루언스 에너지 · `CPER` · `CRCL` 써클 인터넷 그룹 · `SKHY` SK하이닉스 ADR · `NTRA` 나테라 · `BMNR` 비트마인 이머션 테크놀로지스 · `NEE` 넥스트에라 에너지 · `NU` 누 홀딩스 · `ALAB` 아스테라 랩스 · `VRT` 버티브 홀딩스 · `NVTS` 나비타스 세미컨덕터 · `QBTS` 디웨이브 퀀텀 · `SMR` 뉴스케일파워 · `COHR` 코히런트 · `CRDO` 크레도 테크놀로지 그룹 홀딩.
+`SKHY`처럼 일봉이 200개 미만이면 SMA200은 만들지 않고 '—'(일부 누락)로 표시하며 점수는 우호가 되지 않게 제한됩니다.
+
+**화면**: 요약 카드(이름·심볼, 점수+라벨, 가격, 1일 수익률, 신선도)를 모바일 2열 · 태블릿 4열 · 데스크톱 6열로 보여 줍니다. 카드를 누르면(버튼, 키보드 가능) 하나의 공용 `<dialog>` 팝업에 가격·1일/20일·SMA20/50/200·RSI14·거래량 비율·근거 칩·기준일·상태/주의를 표시합니다. Esc·닫기 버튼·배경 클릭으로 닫히고, 닫으면 눌렀던 카드로 포커스가 돌아오며 열려 있는 동안 본문 스크롤이 잠깁니다. 팝업 내용은 JSON→`textContent`로만 채워 HTML 주입이 없고, JS가 꺼져도 요약 카드는 그대로 보입니다.
 **AI·검색·뉴스 API를 쓰지 않으며 API 키/시크릿도 필요 없습니다.** 출력은 AI가 생성한 것이 아니라 아래 공개 공식의 계산 결과입니다.
 
 데이터: Yahoo Finance chart JSON(`range=1y&interval=1d`, 키 불필요). 종목마다 독립 조회하며,
