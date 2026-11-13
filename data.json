@@ -8,16 +8,16 @@
       "src_date": "11-13",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,521 / 50일선 7,667 / 200일선 7,340 · 63일 고점대비 -3.8% · 20일 -1.8%",
+      "note": "S&P 7,547 / 50일선 7,667 / 200일선 7,340 · 63일 고점대비 -3.5% · 20일 -1.5%",
       "above20": false,
       "above50": false,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0381,
-      "reb63": 0.0228,
-      "dd252": -0.0381,
-      "r20": -0.018
+      "dd63": -0.0348,
+      "reb63": 0.0263,
+      "dd252": -0.0348,
+      "r20": -0.0147
     },
     "cape": {
       "num": 40.09,
@@ -38,11 +38,11 @@
       "auto": true
     },
     "vix": {
-      "num": 20.2,
-      "val": "20 · 경계",
+      "num": 19.1,
+      "val": "19 · 잠잠",
       "src_date": "11-13",
       "auto": true,
-      "vix_falling": false
+      "vix_falling": true
     },
     "real_yield": {
       "num": 2.78,
@@ -258,7 +258,7 @@
         "sma50": 338.4752,
         "sma200": 300.763,
         "rsi14": 59.69,
-        "volume_ratio": 0.654
+        "volume_ratio": 0.656
       },
       {
         "symbol": "FLNC",
@@ -296,7 +296,7 @@
         "sma50": 7.1234,
         "sma200": 14.4923,
         "rsi14": 34.37,
-        "volume_ratio": 0.927
+        "volume_ratio": 0.932
       },
       {
         "symbol": "CPER",
@@ -372,7 +372,7 @@
         "sma50": 83.4988,
         "sma200": 85.8997,
         "rsi14": 32.92,
-        "volume_ratio": 0.714
+        "volume_ratio": 0.719
       },
       {
         "symbol": "SKHY",
@@ -410,7 +410,7 @@
         "sma50": 164.6416,
         "sma200": null,
         "rsi14": 44.43,
-        "volume_ratio": 0.587
+        "volume_ratio": 0.604
       },
       {
         "symbol": "NTRA",
@@ -486,7 +486,7 @@
         "sma50": 23.574,
         "sma200": 20.4889,
         "rsi14": 38.0,
-        "volume_ratio": 0.747
+        "volume_ratio": 0.754
       },
       {
         "symbol": "NEE",
@@ -562,7 +562,7 @@
         "sma50": 13.8068,
         "sma200": 14.2019,
         "rsi14": 38.13,
-        "volume_ratio": 0.695
+        "volume_ratio": 0.702
       },
       {
         "symbol": "ALAB",
@@ -600,7 +600,7 @@
         "sma50": 295.4856,
         "sma200": 257.157,
         "rsi14": 41.12,
-        "volume_ratio": 0.68
+        "volume_ratio": 0.684
       },
       {
         "symbol": "VRT",
@@ -638,7 +638,7 @@
         "sma50": 232.6446,
         "sma200": 271.5432,
         "rsi14": 47.51,
-        "volume_ratio": 0.648
+        "volume_ratio": 0.656
       },
       {
         "symbol": "NVTS",
@@ -676,7 +676,7 @@
         "sma50": 10.3575,
         "sma200": 13.2666,
         "rsi14": 50.41,
-        "volume_ratio": 0.69
+        "volume_ratio": 0.696
       },
       {
         "symbol": "QBTS",
@@ -714,7 +714,7 @@
         "sma50": 14.0851,
         "sma200": 18.5693,
         "rsi14": 36.62,
-        "volume_ratio": 0.883
+        "volume_ratio": 0.888
       },
       {
         "symbol": "SMR",
@@ -752,7 +752,7 @@
         "sma50": 7.1156,
         "sma200": 10.1967,
         "rsi14": 36.18,
-        "volume_ratio": 1.182
+        "volume_ratio": 1.185
       },
       {
         "symbol": "COHR",
@@ -790,7 +790,7 @@
         "sma50": 266.1906,
         "sma200": 296.8022,
         "rsi14": 49.2,
-        "volume_ratio": 0.828
+        "volume_ratio": 0.837
       },
       {
         "symbol": "CRDO",
@@ -828,7 +828,7 @@
         "sma50": 172.9347,
         "sma200": 180.8509,
         "rsi14": 43.12,
-        "volume_ratio": 0.595
+        "volume_ratio": 0.604
       }
     ]
   }
