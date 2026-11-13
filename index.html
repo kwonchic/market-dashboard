@@ -16,13 +16,15 @@
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--steel)}
   .tabs-radio{position:absolute;left:-9999px;width:0;height:0;opacity:0}
   .tabbar{display:flex;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:5px;margin-bottom:14px}
-  .tab{flex:1;color:var(--mid);font-family:var(--body);font-weight:600;font-size:15px;padding:11px 10px;border-radius:8px;
-    cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none}
+  .tab{flex:1;min-width:0;min-height:44px;color:var(--mid);font-family:var(--body);font-weight:600;font-size:15px;padding:10px 10px;border-radius:8px;
+    cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none;text-align:center}
+  @media(max-width:480px){.tab{font-size:13px;gap:4px;padding:10px 4px}.tab .flag{font-size:14px}}
   .tab .flag{font-size:16px}
-  #t-us:checked ~ .tabbar label[for="t-us"], #t-kr:checked ~ .tabbar label[for="t-kr"]{background:var(--panel);color:var(--hi);box-shadow:inset 0 0 0 1px var(--line)}
+  #t-us:checked ~ .tabbar label[for="t-us"], #t-kr:checked ~ .tabbar label[for="t-kr"], #t-wl:checked ~ .tabbar label[for="t-wl"]{background:var(--panel);color:var(--hi);box-shadow:inset 0 0 0 1px var(--line)}
   .pane{display:none}
   #t-us:checked ~ .content .pane-us{display:block}
   #t-kr:checked ~ .content .pane-kr{display:block}
+  #t-wl:checked ~ .content .pane-wl{display:block}
   .hero{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:20px 20px 22px;margin-bottom:14px}
   .hero .top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
   .hero .asof{font-family:var(--mono);font-size:11.5px;color:var(--dim);text-align:right}.hero .asof b{color:var(--mid);font-weight:500}
@@ -77,15 +79,55 @@
   .sline:first-of-type{padding-top:2px}.sline:last-child{border-bottom:none}.sline b{color:var(--hi);font-weight:600}
   .sline .th{font-family:var(--mono);font-size:12px;color:var(--steel)}
   .sline .now-red{color:var(--red);font-weight:600}.sline .now-amber{color:var(--amber);font-weight:600}.sline .now-green{color:var(--green);font-weight:600}
+  /* 관심 종목 탭 */
+  .whero{padding:18px 16px 18px}.whero .eyebrow{font-size:12px}.wtitle{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.25;margin:8px 0 6px;letter-spacing:-.01em}
+  .wasof{font-family:var(--mono);font-size:12.5px;color:var(--mid)}.wasof b{color:var(--hi);font-weight:500}
+  .wnote{font-size:13.5px;color:var(--mid);margin:10px 0 14px;overflow-wrap:anywhere}
+  .wsum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .wsum-item{border:1px solid var(--line);border-radius:10px;background:rgba(11,16,23,.35);padding:8px 4px;text-align:center;min-width:0}
+  .wsum-item b{display:block;font-family:var(--disp);font-size:22px;line-height:1.1}.wsum-item span{font-size:12px;color:var(--mid);overflow-wrap:anywhere}
+  .wsum-item.w-fav b{color:var(--green)}.wsum-item.w-wait b{color:var(--steel)}.wsum-item.w-warn b{color:var(--amber)}.wsum-item.w-na b{color:var(--dim)}
+  .wfresh{display:inline-block;font-family:var(--mono);font-size:12px;border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--mid);margin-left:4px}
+  .wfresh.fresh{color:var(--green);border-color:rgba(79,178,134,.4)}.wfresh.delayed,.wfresh.unknown{color:var(--amber);border-color:rgba(217,164,65,.4)}.wfresh.stale{color:var(--red);border-color:rgba(224,106,92,.4)}
+  .wlist{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:14px}@media(min-width:900px){.wlist{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  .wcard{min-width:0;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:15px 15px 13px;position:relative;overflow:hidden}
+  .wcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--dim)}
+  .wcard.w-fav::before{background:var(--green)}.wcard.w-wait::before{background:var(--steel)}.wcard.w-warn::before{background:var(--amber)}
+  .whead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.wid{min-width:0}
+  .wname{display:block;font-size:17px;font-weight:600;line-height:1.3}.wsym{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+  .wscore{text-align:right;flex:none}.wlabel{display:block;font-family:var(--disp);font-weight:700;font-size:24px;line-height:1.1}
+  .w-fav .wlabel{color:var(--green)}.w-wait .wlabel{color:var(--steel)}.w-warn .wlabel{color:var(--amber)}.w-na .wlabel{color:var(--dim);font-size:18px}
+  .wnum{font-family:var(--mono);font-size:13px;color:var(--mid)}.wnum b{font-size:20px;color:var(--hi);font-weight:600}.wnum small{font-size:12px;color:var(--dim)}
+  .wprice{margin-top:10px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.wprice b{font-family:var(--disp);font-size:26px;font-weight:700;letter-spacing:-.01em}.wprice span{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+  .wmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-family:var(--mono);font-size:12px;color:var(--mid)}.wmeta .wfresh{margin-left:0}
+  .wwarn{margin-top:10px;font-size:13px;line-height:1.5;color:var(--red);background:rgba(224,106,92,.08);border:1px solid rgba(224,106,92,.3);border-radius:8px;padding:8px 10px}
+  .wwarn.soft{color:var(--amber);background:rgba(217,164,65,.08);border-color:rgba(217,164,65,.3)}
+  .wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+  .wm{border:1px solid rgba(32,42,56,.9);border-radius:10px;background:rgba(11,16,23,.35);padding:7px 9px;min-width:0}
+  .wk{display:block;font-family:var(--mono);font-size:12px;color:var(--dim)}.wv{display:block;font-size:14px;font-weight:600;color:var(--hi);overflow-wrap:anywhere}
+  .wv.pos{color:var(--green)}.wv.neg{color:var(--red)}
+  .wchips{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .wchips li{font-size:12.5px;line-height:1.35;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mid);min-width:0;overflow-wrap:anywhere}
+  .wchips li.pos{color:var(--green);border-color:rgba(79,178,134,.4);background:rgba(79,178,134,.07)}
+  .wchips li.neg{color:var(--amber);border-color:rgba(217,164,65,.4);background:rgba(217,164,65,.07)}
+  .wfoot{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--dim);line-height:1.5}
+  .wformula{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);margin-top:2px}
+  .wformula summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;padding:10px 16px;font-size:14px;font-weight:600;color:var(--mid)}
+  .wformula summary::-webkit-details-marker{display:none}.wformula[open] summary{color:var(--steel)}
+  .wf-body{padding:0 16px 14px;font-size:13px;color:var(--mid);line-height:1.6;overflow-wrap:anywhere}.wf-body b{display:block;color:var(--hi);margin:10px 0 4px}
+  .pane-wl .srcs{font-size:12px}
+  .wf-body ol,.wf-body ul{margin:0 0 0 18px}.wf-body li{margin-bottom:4px}
   .disclaimer{margin-top:14px;font-size:11.5px;color:var(--dim);line-height:1.55}
   .srcs{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:#3F4C5E;line-height:1.7}
 </style>
 </head><body><div class="wrap">
   <input type="radio" name="tab" id="t-us" class="tabs-radio" checked>
   <input type="radio" name="tab" id="t-kr" class="tabs-radio">
+  <input type="radio" name="tab" id="t-wl" class="tabs-radio">
   <div class="tabbar">
     <label class="tab" for="t-us"><span class="flag">🇺🇸</span> 미국 증시</label>
     <label class="tab" for="t-kr"><span class="flag">🇰🇷</span> 국내 증시</label>
+    <label class="tab" for="t-wl">📌 관심 종목</label>
   </div>
   <div class="content"><section class="pane pane-us">
   <div class="hero">
@@ -107,7 +149,7 @@
   </div>
   <div class="tiles"><div class="tile buy"><div class="tname">사 모으기</div><div class="torig">BUY · 누적</div><div class="big g">우호</div><div class="tmeta">방해요인 0 · 비싸서 조금씩만</div></div><div class="tile trim"><div class="tname">조금씩 팔기</div><div class="torig">TRIM · 트림</div><div class="big a">깃발 1</div><div class="tmeta">주가 비쌈 켜짐</div></div><div class="tile exit"><div class="tname">전부 팔기</div><div class="torig">EXIT · 전량</div><div class="big g">안전</div><div class="tmeta">위험 신호 0 / 3</div></div></div>
   <div class="section-h"><span class="eyebrow">핵심 지표 · 눌러서 설명</span><span class="rule"></span></div>
-  <div class="detail"><details class="drow"><summary><span class="dot green"></span><span class="dname">추세 (200일 평균선)</span><span class="dval green">상승 · 200일선 위</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · 200-day moving average</span><br>주가가 200일 평균선 위이고 선이 우상향이면 '건강한 상승'이라 눌릴 때 사 모음. 200일선·50일선 모두 위면 상승 추세 확인.  <i style='color:#5C6C82'>(S&P 7,525 / 50일선 7,667 / 200일선 7,340 · 63일 고점대비 -3.8% · 20일 -1.8%)</i><span class="thr">▸ 기준값: 주가 &gt; 우상향 200일선 → 사 모으기 / 이탈+꺾임 → 전부 팔기 1차조건</span></div></details><details class="drow"><summary><span class="dot red"></span><span class="dname">주가 비쌈 정도</span><span class="dval red">매우 비쌈 · CAPE 40.1</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · CAPE (경기조정 주가수익비율)</span><br>최근 10년 평균 이익 대비 주가가 몇 배인지. 40배대는 역사적 상단권(최고 44배, 닷컴버블급). 단기 방향은 못 맞히지만, 비쌀수록 앞으로 10년 수익이 낮고 폭락 시 낙폭이 큼. '사지 마'가 아니라 '조금씩 사라'.<span class="thr">▸ 기준값: 38 초과 → 조금씩 팔기 켜짐 / 40 초과 → 신규는 1/3씩만</span></div></details><details class="drow"><summary><span class="dot amber"></span><span class="dname">신용 불안 (회사채 위험 프리미엄)</span><span class="dval amber">320bp · 주의 구간</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · HY OAS (하이일드 스프레드)</span><br>위험한 회사채에 투자자가 얼마나 더 높은 이자를 요구하는지. 낮으면 시장이 안심(=매수 방해 없음), 저점에서 벌어지기 시작하면 하락의 조기경고. 주가보다 2~4주 앞서 움직이는 편.<span class="thr">▸ 기준값: 300 미만 우호 · 300~400 주의 · 400 초과 경고</span></div></details><details class="drow"><summary><span class="dot green"></span><span class="dname">상승 종목 폭</span><span class="dval green">건강 · 2월래 최고</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · breadth (시장 폭)</span><br>지수는 신고가인데 오르는 종목 수가 줄면 위험(소수 대형주만 견인). 200일선 위 종목 비율이 높고 넓어지는 중이면 꼭대기 징후 아님.<span class="thr">▸ 기준값: 지수 신고가인데 오르는 종목↓ 또는 평균선 위&lt;50% → 경고</span></div></details></div>
+  <div class="detail"><details class="drow"><summary><span class="dot green"></span><span class="dname">추세 (200일 평균선)</span><span class="dval green">상승 · 200일선 위</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · 200-day moving average</span><br>주가가 200일 평균선 위이고 선이 우상향이면 '건강한 상승'이라 눌릴 때 사 모음. 200일선·50일선 모두 위면 상승 추세 확인.  <i style='color:#5C6C82'>(S&P 7,524 / 50일선 7,667 / 200일선 7,340 · 63일 고점대비 -3.8% · 20일 -1.8%)</i><span class="thr">▸ 기준값: 주가 &gt; 우상향 200일선 → 사 모으기 / 이탈+꺾임 → 전부 팔기 1차조건</span></div></details><details class="drow"><summary><span class="dot red"></span><span class="dname">주가 비쌈 정도</span><span class="dval red">매우 비쌈 · CAPE 40.1</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · CAPE (경기조정 주가수익비율)</span><br>최근 10년 평균 이익 대비 주가가 몇 배인지. 40배대는 역사적 상단권(최고 44배, 닷컴버블급). 단기 방향은 못 맞히지만, 비쌀수록 앞으로 10년 수익이 낮고 폭락 시 낙폭이 큼. '사지 마'가 아니라 '조금씩 사라'.<span class="thr">▸ 기준값: 38 초과 → 조금씩 팔기 켜짐 / 40 초과 → 신규는 1/3씩만</span></div></details><details class="drow"><summary><span class="dot amber"></span><span class="dname">신용 불안 (회사채 위험 프리미엄)</span><span class="dval amber">320bp · 주의 구간</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · HY OAS (하이일드 스프레드)</span><br>위험한 회사채에 투자자가 얼마나 더 높은 이자를 요구하는지. 낮으면 시장이 안심(=매수 방해 없음), 저점에서 벌어지기 시작하면 하락의 조기경고. 주가보다 2~4주 앞서 움직이는 편.<span class="thr">▸ 기준값: 300 미만 우호 · 300~400 주의 · 400 초과 경고</span></div></details><details class="drow"><summary><span class="dot green"></span><span class="dname">상승 종목 폭</span><span class="dval green">건강 · 2월래 최고</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · breadth (시장 폭)</span><br>지수는 신고가인데 오르는 종목 수가 줄면 위험(소수 대형주만 견인). 200일선 위 종목 비율이 높고 넓어지는 중이면 꼭대기 징후 아님.<span class="thr">▸ 기준값: 지수 신고가인데 오르는 종목↓ 또는 평균선 위&lt;50% → 경고</span></div></details></div>
   <details class="more-wrap"><summary class="more-btn">＋ 보조 지표 더보기</summary>
     <div class="detail" style="margin-top:10px"><details class="drow"><summary><span class="dot amber"></span><span class="dname">공포지수</span><span class="dval amber">20 · 경계</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · VIX</span><br>시장이 얼마나 겁먹었는지. 낮게 잠잠하다가 갑자기 튀는 '분위기 전환'이 추세 종료와 자주 겹침. 추세·신용과 같이 볼 때 전부 팔기 신호.<span class="thr">▸ 기준값: 28 초과 + 평균선 이탈 + 신용 400 초과 중 2개 → 전부 팔기</span></div></details><details class="drow"><summary><span class="dot red"></span><span class="dname">실질금리</span><span class="dval red">2.78% · 강한 부담</span><span class="caret">설명</span></summary><div class="help"><span class="orig">원어 · 10Y TIPS yield (DFII10)</span><br>물가를 뺀 미국 10년 금리. 높을수록 미래 이익을 현재가치로 할인하는 부담이 커져 성장주·AI·반도체 같은 고밸류 주식에 압박이 됩니다. CAPE가 높은 구간에서는 특히 같이 봐야 합니다.<span class="thr">▸ 기준값: 1.5% 미만 우호 · 1.5~2.5% 부담 · 2.5% 초과 강한 부담</span></div></details></div></details>
   <div class="section-h"><span class="eyebrow">요약 · 기준값</span><span class="rule"></span></div>
@@ -141,5 +183,22 @@
   <div class="summary"><div class="sline"><b>추세</b> — <span class="now-green">상승 · 200일선 위</span>. <span class="th">주가 &gt; 우상향 200일선 → 사 모으기 / 이탈+꺾임 → 전부 팔기 1차조건</span></div><div class="sline"><b>주가 비쌈 정도</b> — <span class="now-amber">싼 편이나 정점 의존</span>. <span class="th">선행 PER 낮음=우호이나, 이익 정점 의존 → 중립+경고</span></div><div class="sline"><b>외국인 수급</b> — <span class="now-red">외국인 순매도 지속</span>. <span class="th">순매수 지속=우호 / 순매도 전환=경고</span></div><div class="sline"><b>원달러 환율</b> — <span class="now-green">~1,334원 · 안정</span>. <span class="th">1,350 미만 우호 · ~1,520 주의 · 초과 경고(원화 급락)</span></div><div class="sline"><b>통화정책</b> — <span class="now-red">3.00%로 인상(긴축)</span>. <span class="th">인상 = 유동성 역풍 / 인하 전환 = 우호</span></div><div class="sline"><b>변동성</b> — <span class="now-amber">20일 변동성 ±2.0%</span>. <span class="th">일간 변동 급확대·사이드카 잦음 → 소액·분할 대응</span></div></div>
   <div class="disclaimer">이 대시보드는 객관적 지표를 규칙에 대조해 보여주는 참고 도구이며, 재무·투자 조언이 아닙니다. 최종 판단과 책임은 이용자 본인에게 있습니다. 한국은 미국과 지표 구성이 다릅니다(환율·외국인 수급 비중 큼). 선행 PER 등 일부는 수동/근사값입니다.</div>
   <div class="srcs">SRC · 국내 가격/수급/환율/변동성=토스증권 Open API · 삼성전자 PBR=Valueline · 기준금리=한국은행 · 선행PER=근사(수동)</div>
+</section><section class="pane pane-wl">
+  <div class="hero whero">
+    <div class="eyebrow">관심 종목 · 3개 고정</div>
+    <h2 class="wtitle">관심 종목 일일 리포트</h2>
+    <div class="wasof">최신 데이터 · <b>2026-11-12</b> <span class="wfresh fresh">최신</span></div>
+    <p class="wnote">AI 분석이 아닌 규칙 기반 계산이며 투자 조언이 아닙니다. 가격·이동평균·RSI·거래량만으로 매기는 점수라 참고용입니다.</p>
+    <div class="wsum"><div class="wsum-item w-fav"><b>1</b><span>우호</span></div><div class="wsum-item w-wait"><b>0</b><span>관망</span></div><div class="wsum-item w-warn"><b>2</b><span>주의</span></div><div class="wsum-item w-na"><b>0</b><span>데이터 없음</span></div></div>
+  </div>
+  <div class="wlist"><article class="wcard w-warn"><header class="whead"><div class="wid"><b class="wname">삼성전자</b><span class="wsym">005930.KS</span></div><div class="wscore"><span class="wlabel">주의</span><span class="wnum"><b>20</b><small>/100</small></span></div></header><div class="wprice"><b>208,000</b><span>KRW</span></div><div class="wmeta"><span class="wfresh fresh">최신</span><span>기준일 2026-11-12</span></div><div class="wgrid"><div class="wm"><span class="wk">1일</span><span class="wv pos">+1.0%</span></div><div class="wm"><span class="wk">20일</span><span class="wv neg">-1.0%</span></div><div class="wm"><span class="wk">SMA20</span><span class="wv neg">▼ 아래 -3.1%</span></div><div class="wm"><span class="wk">SMA50</span><span class="wv neg">▼ 아래 -14.0%</span></div><div class="wm"><span class="wk">SMA200</span><span class="wv neg">▼ 아래 -13.4%</span></div><div class="wm"><span class="wk">RSI14</span><span class="wv ">43 · 중립</span></div><div class="wm"><span class="wk">거래량</span><span class="wv ">평균 1.0배</span></div></div><ul class="wchips"><li class="neg">200일선 아래 (-13.4%)</li><li class="neg">50일선 아래 (-14.0%)</li><li class="neg">20일선 아래 (-3.1%)</li><li class="neg">20일선이 50일선 아래</li></ul><footer class="wfoot">출처 Yahoo Finance chart · 일봉 244개 · 지연·누락 가능</footer></article><article class="wcard w-warn"><header class="whead"><div class="wid"><b class="wname">SK하이닉스</b><span class="wsym">000660.KS</span></div><div class="wscore"><span class="wlabel">주의</span><span class="wnum"><b>20</b><small>/100</small></span></div></header><div class="wprice"><b>1,254,000</b><span>KRW</span></div><div class="wmeta"><span class="wfresh fresh">최신</span><span>기준일 2026-11-12</span></div><div class="wgrid"><div class="wm"><span class="wk">1일</span><span class="wv neg">-1.8%</span></div><div class="wm"><span class="wk">20일</span><span class="wv neg">-0.6%</span></div><div class="wm"><span class="wk">SMA20</span><span class="wv neg">▼ 아래 -4.1%</span></div><div class="wm"><span class="wk">SMA50</span><span class="wv neg">▼ 아래 -19.3%</span></div><div class="wm"><span class="wk">SMA200</span><span class="wv neg">▼ 아래 -17.3%</span></div><div class="wm"><span class="wk">RSI14</span><span class="wv ">42 · 중립</span></div><div class="wm"><span class="wk">거래량</span><span class="wv ">평균 1.1배</span></div></div><ul class="wchips"><li class="neg">200일선 아래 (-17.3%)</li><li class="neg">50일선 아래 (-19.3%)</li><li class="neg">20일선 아래 (-4.1%)</li><li class="neg">20일선이 50일선 아래</li></ul><footer class="wfoot">출처 Yahoo Finance chart · 일봉 244개 · 지연·누락 가능</footer></article><article class="wcard w-fav"><header class="whead"><div class="wid"><b class="wname">Apple</b><span class="wsym">AAPL</span></div><div class="wscore"><span class="wlabel">우호</span><span class="wnum"><b>82</b><small>/100</small></span></div></header><div class="wprice"><b>354.88</b><span>USD</span></div><div class="wmeta"><span class="wfresh fresh">최신</span><span>기준일 2026-11-12</span></div><div class="wgrid"><div class="wm"><span class="wk">1일</span><span class="wv neg">-0.2%</span></div><div class="wm"><span class="wk">20일</span><span class="wv pos">+3.8%</span></div><div class="wm"><span class="wk">SMA20</span><span class="wv pos">▲ 위 +2.7%</span></div><div class="wm"><span class="wk">SMA50</span><span class="wv pos">▲ 위 +4.8%</span></div><div class="wm"><span class="wk">SMA200</span><span class="wv pos">▲ 위 +18.0%</span></div><div class="wm"><span class="wk">RSI14</span><span class="wv ">60 · 중립</span></div><div class="wm"><span class="wk">거래량</span><span class="wv ">평균 0.7배</span></div></div><ul class="wchips"><li class="pos">200일선 위 (+18.0%)</li><li class="pos">50일선 위 (+4.8%)</li><li class="pos">20일선 위 (+2.7%)</li><li class="pos">20일선이 50일선 위</li></ul><footer class="wfoot">출처 Yahoo Finance chart · 일봉 251개 · 지연·누락 가능</footer></article></div>
+  <details class="wformula"><summary>점수 산정 방식 · 데이터 한계</summary>
+    <div class="wf-body">
+      <b>점수 공식 (v1)</b><ol><li>시작 50점에서 아래 항목을 더하고 뺍니다 (정수로 반올림, 0~100).</li><li>종가 vs 20일선(SMA20): 위 +6 · 아래 -6</li><li>종가 vs 50일선(SMA50): 위 +8 · 아래 -8</li><li>종가 vs 200일선(SMA200): 위 +10 · 아래 -10</li><li>SMA20 vs SMA50: SMA20이 위 +6 · 아래 -6</li><li>20거래일 수익률: 1%p당 0.5점, 최대 ±8점</li><li>RSI14: 70 이상(과열) -8 · 30 이하(과매도) +4</li><li>거래량 확인: 직전 20일 평균의 1.5배 이상이면 당일 상승 +4 · 하락 -4</li><li>라벨: 65점 이상 우호 · 40점 이하 주의 · 그 사이 관망</li><li>입력이 하나라도 없으면 없는 항목은 0점(중립)으로 두고 품질을 &#x27;일부 누락&#x27;으로 표시하며, 점수는 최대 64점으로 제한해 우호가 되지 않게 합니다.</li></ol>
+      <b>RSI 계산</b><p>RSI14 (Wilder): 처음 14개 종가 변화량의 단순평균을 시작값으로, 이후 평균 = (직전 평균 × 13 + 오늘 값) ÷ 14 로 상승폭·하락폭을 각각 평활. RSI = 100 − 100 ÷ (1 + 평균상승 ÷ 평균하락). 하락이 전혀 없으면 100, 변화가 전혀 없으면 50.</p>
+      <b>데이터 한계</b><ul><li>출처: Yahoo Finance chart(키 불필요). 지연·누락될 수 있으며, 거래소 휴장·정정으로 값이 바뀔 수 있습니다.</li><li>기준일은 마지막 일봉의 거래소 현지 거래일입니다. 데이터 기준일에서 4일 이내면 &#x27;최신&#x27;, 그보다 오래되면 &#x27;지연&#x27;으로 표시합니다.</li><li>거래량 비율 = 최신 거래량 ÷ 직전 20거래일 평균. 진행 중인 장의 미완성 일봉은 계산에서 제외합니다.</li><li>조회나 검증에 실패하면 이전 값을 &#x27;갱신 실패&#x27;로 표시해 보존하며 기준일은 바꾸지 않습니다. 이전 값도 없으면 &#x27;데이터 없음&#x27;입니다.</li><li>뉴스·실적·목표가·매매 시점은 다루지 않습니다. 점수는 과거 가격 흐름의 요약일 뿐 예측이 아닙니다.</li></ul>
+    </div>
+  </details>
+  <div class="srcs">SRC · Yahoo Finance chart(일봉 1년) · 규칙 기반 계산 · 갱신은 다른 탭과 동일한 스케줄</div>
 </section></div>
 </div></body></html>

@@ -2,6 +2,7 @@
 
 미국·국내 증시의 객관적 지표를 정해진 기준값에 대조해
 "사 모으기 / 보유 / 조금씩 매도 / 전량 매도" 판단을 자동 산출하는 정적 대시보드.
+세 번째 탭 **📌 관심 종목**은 3개 종목의 일일 기술 지표를 **규칙 기반(결정론)**으로 요약합니다.
 
 **공개 URL:** https://kwonchic.github.io/market-dashboard/
 
@@ -10,11 +11,48 @@
 ```
 fetch_data.py ──▶ data.json ──▶ generate.py ──▶ dashboard.html ──▶ index.html (Pages 게시)
  (지표 수집)      (현재값)       (규칙 엔진)      (정적 HTML, JS 0줄)
+      │                              ▲
+      └── watchlist.py ──────────────┘   (관심 종목: URL 검증·정규화·지표·점수·신선도, 표준 라이브러리만)
 ```
 
-- **자동 수집** (매일 21:30 KST, GitHub Actions): HY OAS·VIX·S&P 200일선(FRED CSV), CAPE(multpl), USD/KRW(open.er-api)
+- **자동 수집** (매일 21:30 KST 등, GitHub Actions): HY OAS·VIX·S&P 200일선(FRED CSV), CAPE(multpl), USD/KRW(open.er-api), 관심 종목(Yahoo chart)
 - **수동 유지** (무료 소스 없음): us.breadth, kr.valuation, kr.flows, kr.bok, kr.vol — `data.json`에서 직접 수정
-- 로컬 실행: `python3 fetch_data.py && python3 generate.py` (외부 의존성 없음, curl만 사용)
+- **탭 3개**: 미국 · 국내 · 관심 종목 — 순수 CSS(라디오+details), JS 0줄
+- 워크플로는 `fetch_data.py`/`generate.py` 전에 `python3 -m unittest discover -s tests -v`를 실행합니다(실패 시 중단).
+- 로컬 실행: `python3 fetch_data.py && python3 generate.py && cp dashboard.html index.html` (외부 의존성 없음, curl만 사용)
+- 테스트: `python3 -m unittest discover -s tests -v` (네트워크 불필요, 로컬 fixture 사용)
+
+## 관심 종목 리포트 (규칙 기반 · AI 아님)
+
+기본 종목(`watchlist.py`의 `DEFAULT_WATCHLIST`): `005930.KS` 삼성전자 · `000660.KS` SK하이닉스 · `AAPL` Apple.
+**AI·검색·뉴스 API를 쓰지 않으며 API 키/시크릿도 필요 없습니다.** 출력은 AI가 생성한 것이 아니라 아래 공개 공식의 계산 결과입니다.
+
+데이터: Yahoo Finance chart JSON(`range=1y&interval=1d`, 키 불필요). 종목마다 독립 조회하며,
+한 종목이 실패해도 다른 종목과 기존 US/KR 수집에는 영향이 없습니다.
+
+계산(유효한 종가·거래량만 사용): 최신 종가·통화, 기준일(거래소 현지 거래일), 1일·20거래일 수익률,
+SMA20/50/200, RSI14, 거래량 ÷ 직전 20거래일 평균, 데이터 품질/신선도.
+
+- **RSI14 (Wilder)**: 처음 14개 종가 변화량의 단순평균을 시작값으로, 이후 `평균 = (직전 평균 × 13 + 오늘 값) / 14`로 상승폭·하락폭을 각각 평활.
+  `RSI = 100 − 100 / (1 + 평균상승 / 평균하락)`. 하락이 없으면 100, 변화가 없으면 50.
+- **점수 (0–100, 정수)**: 시작 50점에서
+  종가 vs SMA20 ±6 · vs SMA50 ±8 · vs SMA200 ±10 · SMA20 vs SMA50 ±6 ·
+  20일 수익률 1%p당 0.5점(최대 ±8) · RSI≥70 −8 / RSI≤30 +4 ·
+  거래량 ≥ 평균 1.5배이면 당일 상승 +4 / 하락 −4. 반올림은 .5 올림, 0~100으로 제한.
+- **라벨**: 65점 이상 `우호` · 40점 이하 `주의` · 그 사이 `관망` (매수/매도 신호가 아닙니다).
+- **누락 처리**: 입력이 하나라도 없으면 해당 항목은 0점(중립)으로 두고 품질을 `partial`로 표시, 점수는 최대 64점으로 제한(우호 불가).
+- **이유 칩**: 실제로 계산된 조건 중 영향이 큰 2~4개(예: `200일선 아래 (-13.4%)`).
+- 공식은 `watchlist.py` 상수에서 UI 설명을 생성하므로 코드와 설명이 어긋나지 않으며, `tests/test_watchlist.py`가 공식·경계값을 고정합니다.
+
+신뢰성 규칙:
+- Yahoo 호스트(`query1.finance.yahoo.com`)·HTTPS만 허용, 심볼은 정규식 검증 후 URL 인코딩, curl은 `--proto =https`.
+- 비유한 값·0 이하 종가·길이 불일치·정렬 오류·50개 미만 데이터는 payload 전체를 거부.
+- 진행 중인 장의 미완성 일봉은 제외, `close`가 null인 봉은 버림.
+- 조회/검증 실패 시 이전 값을 `stale`(갱신 실패)로 보존하고 `src_date`는 그대로 둡니다. 이전 값이 없으면 `데이터 없음` 카드. 공개 데이터에는 고정 사유 코드(`fetch_failed`/`invalid_payload`)만 남기고 예외 메시지·URL·응답 본문은 복사하지 않습니다.
+- 신선도: 기준일이 데이터 기준일(`asOf`, KST)에서 4일 이내면 `최신`, 넘으면 `지연`.
+
+한계: 지연·누락 가능한 무료 데이터이며 뉴스·실적·목표가·매매 시점은 다루지 않습니다. 과거 가격 흐름의 요약일 뿐 예측이 아닙니다.
+`tests/fixtures/`는 Yahoo chart 스키마를 따르는 **합성** payload이며 `python3 tests/make_fixtures.py`로 재생성됩니다.
 
 ## 주의
 

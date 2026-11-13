@@ -8,16 +8,16 @@
       "src_date": "11-13",
       "auto": false,
       "tone": "green",
-      "note": "S&P 7,525 / 50일선 7,667 / 200일선 7,340 · 63일 고점대비 -3.8% · 20일 -1.8%",
+      "note": "S&P 7,524 / 50일선 7,667 / 200일선 7,340 · 63일 고점대비 -3.8% · 20일 -1.8%",
       "above20": false,
       "above50": false,
       "above200": true,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0376,
-      "reb63": 0.0233,
-      "dd252": -0.0376,
-      "r20": -0.0176
+      "dd63": -0.0377,
+      "reb63": 0.0232,
+      "dd252": -0.0377,
+      "r20": -0.0177
     },
     "cape": {
       "num": 40.09,
@@ -38,7 +38,7 @@
       "auto": true
     },
     "vix": {
-      "num": 20.3,
+      "num": 20.1,
       "val": "20 · 경계",
       "src_date": "11-13",
       "auto": true,
@@ -141,5 +141,125 @@
       "threshold": 1.0,
       "note": "사용자 기준: PBR 1.0 이하 강매수. 현재는 기준보다 179% 높음."
     }
+  },
+  "watchlist": {
+    "source": "Yahoo Finance chart",
+    "formula": 1,
+    "items": [
+      {
+        "symbol": "005930.KS",
+        "name": "삼성전자",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-12",
+        "currency": "KRW",
+        "points": 244,
+        "quality": "ok",
+        "score": 20,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-13.4%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-14.0%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-3.1%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선이 50일선 아래",
+            "tone": "neg"
+          }
+        ],
+        "close": 208000.0,
+        "ret_1d": 0.009709,
+        "ret_20d": -0.009524,
+        "sma20": 214600.0,
+        "sma50": 241940.0,
+        "sma200": 240286.75,
+        "rsi14": 42.89,
+        "volume_ratio": 1.032
+      },
+      {
+        "symbol": "000660.KS",
+        "name": "SK하이닉스",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-12",
+        "currency": "KRW",
+        "points": 244,
+        "quality": "ok",
+        "score": 20,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-17.3%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-19.3%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-4.1%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선이 50일선 아래",
+            "tone": "neg"
+          }
+        ],
+        "close": 1254000.0,
+        "ret_1d": -0.018011,
+        "ret_20d": -0.006339,
+        "sma20": 1307700.0,
+        "sma50": 1553620.0,
+        "sma200": 1517150.0,
+        "rsi14": 41.97,
+        "volume_ratio": 1.059
+      },
+      {
+        "symbol": "AAPL",
+        "name": "Apple",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-12",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 82,
+        "label": "우호",
+        "reasons": [
+          {
+            "text": "200일선 위 (+18.0%)",
+            "tone": "pos"
+          },
+          {
+            "text": "50일선 위 (+4.8%)",
+            "tone": "pos"
+          },
+          {
+            "text": "20일선 위 (+2.7%)",
+            "tone": "pos"
+          },
+          {
+            "text": "20일선이 50일선 위",
+            "tone": "pos"
+          }
+        ],
+        "close": 354.88,
+        "ret_1d": -0.002109,
+        "ret_20d": 0.037661,
+        "sma20": 345.51,
+        "sma50": 338.4752,
+        "sma200": 300.763,
+        "rsi14": 59.69,
+        "volume_ratio": 0.654
+      }
+    ]
   }
 }

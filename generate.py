@@ -7,7 +7,9 @@
 - 중요: 모바일 미리보기가 인라인 JS를 실행하지 않으므로, 데이터를 HTML에 직접 박아 렌더링한다.
         탭 전환/설명 펼치기/보조지표는 모두 순수 CSS(라디오+details)로 처리 → JS 0줄.
 """
-import json, os, html as _html
+import json, os, re, html as _html
+
+import watchlist as wl
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -396,6 +398,172 @@ def pane_html(mkt,data):
   <div class="srcs">{srcs}</div>
 </section>'''
 
+
+# ── 3-1) 관심 종목 일일 리포트 (규칙 기반 · AI 아님) ────────────────────────
+_e = _html.escape
+W_LABEL_CLASS = {"우호": "w-fav", "관망": "w-wait", "주의": "w-warn"}
+W_FRESH_TEXT = {"fresh": "최신", "delayed": "지연", "stale": "갱신 실패", "unavailable": "데이터 없음", "unknown": "날짜 확인 필요"}
+W_LIMITS = [
+    "출처: Yahoo Finance chart(키 불필요). 지연·누락될 수 있으며, 거래소 휴장·정정으로 값이 바뀔 수 있습니다.",
+    "기준일은 마지막 일봉의 거래소 현지 거래일입니다. 데이터 기준일에서 4일 이내면 '최신', 그보다 오래되면 '지연'으로 표시합니다.",
+    "거래량 비율 = 최신 거래량 ÷ 직전 20거래일 평균. 진행 중인 장의 미완성 일봉은 계산에서 제외합니다.",
+    "조회나 검증에 실패하면 이전 값을 '갱신 실패'로 표시해 보존하며 기준일은 바꾸지 않습니다. 이전 값도 없으면 '데이터 없음'입니다.",
+    "뉴스·실적·목표가·매매 시점은 다루지 않습니다. 점수는 과거 가격 흐름의 요약일 뿐 예측이 아닙니다.",
+]
+
+
+def _wnum(v):
+    return float(v) if wl.is_num(v) else None
+
+
+def _wprice(v, cur):
+    v = _wnum(v)
+    if v is None:
+        return "—"
+    return f"{v:,.0f}" if cur == "KRW" else f"{v:,.2f}"
+
+
+def _wpct(v):
+    v = _wnum(v)
+    return "—" if v is None else f"{v * 100:+.1f}%"
+
+
+def _wtone(v):
+    v = _wnum(v)
+    return "" if v is None or v == 0 else ("pos" if v > 0 else "neg")
+
+
+def _wview(item, symbol, name):
+    """데이터 항목 -> 렌더용 뷰. 신뢰할 수 없으면 None(= 데이터 없음 카드)."""
+    if not isinstance(item, dict) or item.get("symbol") != symbol:
+        return None
+    score = item.get("score")
+    if (item.get("status") not in ("ok", "stale") or item.get("label") not in wl.LABELS
+            or not isinstance(score, int) or isinstance(score, bool) or not 0 <= score <= 100
+            or not wl._valid_date(item.get("src_date")) or _wnum(item.get("close")) in (None, 0.0)):
+        return None
+    nm = item.get("name")
+    return dict(item, name=nm if isinstance(nm, str) and 0 < len(nm) <= 40 else name)
+
+
+def _wchips(reasons):
+    out = []
+    for c in (reasons if isinstance(reasons, list) else [])[:wl.MAX_CHIPS]:
+        if isinstance(c, dict) and isinstance(c.get("text"), str):
+            tone = c.get("tone") if c.get("tone") in ("pos", "neg", "neu") else "neu"
+            out.append(f'<li class="{tone}">{_e(c["text"][:80])}</li>')
+    return "".join(out)
+
+
+def _wmetric(key, val, tone="", sub=""):
+    sub_html = f'<small>{_e(sub)}</small>' if sub else ""
+    return f'<div class="wm"><span class="wk">{_e(key)}</span><span class="wv {tone}">{_e(val)}</span>{sub_html}</div>'
+
+
+def _wsma(close, avg):
+    c, a = _wnum(close), _wnum(avg)
+    if c is None or a is None or a == 0:
+        return "—", ""
+    rel = c / a - 1
+    if c > a:
+        return f"▲ 위 {rel * 100:+.1f}%", "pos"
+    if c < a:
+        return f"▼ 아래 {rel * 100:+.1f}%", "neg"
+    return "■ 같음 +0.0%", ""
+
+
+def _wcard_html(v, symbol, name, as_of):
+    sym = _e(symbol)
+    if v is None:
+        reason = ""
+        return (f'<article class="wcard w-na"><header class="whead"><div class="wid"><b class="wname">{_e(name)}</b>'
+                f'<span class="wsym">{sym}</span></div><div class="wscore"><span class="wlabel">데이터 없음</span>'
+                f'<span class="wnum"><b>—</b></span></div></header>'
+                f'<p class="wwarn">표시할 데이터가 없습니다. 값을 만들어 채우지 않으며, 다음 갱신 때 다시 조회합니다.{reason}</p>'
+                f'<footer class="wfoot">출처 Yahoo Finance chart · 기준일 — · 지연·누락 가능</footer></article>')
+    state, age = wl.freshness(v, as_of)
+    fresh_txt = W_FRESH_TEXT[state] + (f" {age}일" if state == "delayed" and age is not None else "")
+    cur = v.get("currency") if isinstance(v.get("currency"), str) and wl.CURRENCY_RE.fullmatch(v["currency"]) else ""
+    warn = ""
+    if v["status"] == "stale":
+        why = wl.SAFE_ERRORS.get(v.get("error"), wl.SAFE_ERRORS["fetch_failed"])
+        warn = (f'<p class="wwarn">⚠ 갱신 실패 · {_e(why)} · 이전 값 표시 중 (기준일 {_e(v["src_date"])} 그대로)</p>')
+    elif v.get("quality") == "partial":
+        warn = '<p class="wwarn soft">일부 지표 누락 · 없는 항목은 중립으로 처리하고 우호는 제한했습니다.</p>'
+    close = v["close"]
+    s20, t20 = _wsma(close, v.get("sma20"))
+    s50, t50 = _wsma(close, v.get("sma50"))
+    s200, t200 = _wsma(close, v.get("sma200"))
+    rsi = _wnum(v.get("rsi14"))
+    rsi_tag = "—" if rsi is None else (f"{rsi:.0f} · 과열" if rsi >= wl.RSI_OVERBOUGHT else
+                                      (f"{rsi:.0f} · 과매도" if rsi <= wl.RSI_OVERSOLD else f"{rsi:.0f} · 중립"))
+    vr = _wnum(v.get("volume_ratio"))
+    metrics = "".join([
+        _wmetric("1일", _wpct(v.get("ret_1d")), _wtone(v.get("ret_1d"))),
+        _wmetric("20일", _wpct(v.get("ret_20d")), _wtone(v.get("ret_20d"))),
+        _wmetric("SMA20", s20, t20), _wmetric("SMA50", s50, t50), _wmetric("SMA200", s200, t200),
+        _wmetric("RSI14", rsi_tag), _wmetric("거래량", "—" if vr is None else f"평균 {vr:.1f}배"),
+    ])
+    return (f'<article class="wcard {W_LABEL_CLASS[v["label"]]}">'
+            f'<header class="whead"><div class="wid"><b class="wname">{_e(v["name"])}</b><span class="wsym">{sym}</span></div>'
+            f'<div class="wscore"><span class="wlabel">{_e(v["label"])}</span>'
+            f'<span class="wnum"><b>{v["score"]}</b><small>/100</small></span></div></header>'
+            f'<div class="wprice"><b>{_e(_wprice(close, cur))}</b><span>{_e(cur)}</span></div>'
+            f'<div class="wmeta"><span class="wfresh {state}">{_e(fresh_txt)}</span>'
+            f'<span>기준일 {_e(v["src_date"])}</span></div>'
+            f'{warn}<div class="wgrid">{metrics}</div>'
+            f'<ul class="wchips">{_wchips(v.get("reasons"))}</ul>'
+            f'<footer class="wfoot">출처 Yahoo Finance chart · 일봉 {_e(str(v.get("points") if isinstance(v.get("points"), int) else "—"))}개 · 지연·누락 가능</footer>'
+            f'</article>')
+
+
+def watchlist_pane_html(data):
+    wdata = data.get("watchlist")
+    raw = wdata.get("items") if isinstance(wdata, dict) and isinstance(wdata.get("items"), list) else []
+    by_sym = {i.get("symbol"): i for i in raw if isinstance(i, dict) and isinstance(i.get("symbol"), str)}
+    as_of = str(data.get("asOf", ""))
+    views = [(sym, name, _wview(by_sym.get(sym), sym, name)) for sym, name in wl.DEFAULT_WATCHLIST]
+    cards = "".join(_wcard_html(v, sym, name, as_of) for sym, name, v in views)
+    counts = {k: 0 for k in (*wl.LABELS, "데이터 없음")}
+    states = []
+    dates = []
+    for _, _, v in views:
+        counts[v["label"] if v else "데이터 없음"] += 1
+        if v:
+            states.append(wl.freshness(v, as_of)[0])
+            dates.append(v["src_date"])
+    cls = {"우호": "w-fav", "관망": "w-wait", "주의": "w-warn", "데이터 없음": "w-na"}
+    strip = "".join(f'<div class="wsum-item {cls[k]}"><b>{n}</b><span>{_e(k)}</span></div>' for k, n in counts.items())
+    if not states:
+        overall, otxt = "unavailable", "데이터 없음"
+    elif "stale" in states:
+        overall, otxt = "stale", "일부 갱신 실패"
+    elif "delayed" in states or "unknown" in states:
+        overall, otxt = "delayed", "일부 지연"
+    else:
+        overall, otxt = "fresh", "최신"
+    latest = max(dates) if dates else "—"
+    rules = "".join(f"<li>{_e(line)}</li>" for line in wl.formula_lines())
+    limits = "".join(f"<li>{_e(t)}</li>" for t in W_LIMITS)
+    return f"""<section class="pane pane-wl">
+  <div class="hero whero">
+    <div class="eyebrow">관심 종목 · 3개 고정</div>
+    <h2 class="wtitle">관심 종목 일일 리포트</h2>
+    <div class="wasof">최신 데이터 · <b>{_e(latest)}</b> <span class="wfresh {overall}">{_e(otxt)}</span></div>
+    <p class="wnote">AI 분석이 아닌 규칙 기반 계산이며 투자 조언이 아닙니다. 가격·이동평균·RSI·거래량만으로 매기는 점수라 참고용입니다.</p>
+    <div class="wsum">{strip}</div>
+  </div>
+  <div class="wlist">{cards}</div>
+  <details class="wformula"><summary>점수 산정 방식 · 데이터 한계</summary>
+    <div class="wf-body">
+      <b>점수 공식 (v{wl.FORMULA_VERSION})</b><ol>{rules}</ol>
+      <b>RSI 계산</b><p>{_e(wl.RSI_FORMULA)}</p>
+      <b>데이터 한계</b><ul>{limits}</ul>
+    </div>
+  </details>
+  <div class="srcs">SRC · Yahoo Finance chart(일봉 1년) · 규칙 기반 계산 · 갱신은 다른 탭과 동일한 스케줄</div>
+</section>"""
+
 # ── 4) 페이지 (JS 0줄, 라디오+CSS 탭) ───────────────────────────────────
 PAGE = '''<!DOCTYPE html>
 <html lang="ko"><head>
@@ -415,13 +583,15 @@ PAGE = '''<!DOCTYPE html>
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--steel)}
   .tabs-radio{position:absolute;left:-9999px;width:0;height:0;opacity:0}
   .tabbar{display:flex;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:5px;margin-bottom:14px}
-  .tab{flex:1;color:var(--mid);font-family:var(--body);font-weight:600;font-size:15px;padding:11px 10px;border-radius:8px;
-    cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none}
+  .tab{flex:1;min-width:0;min-height:44px;color:var(--mid);font-family:var(--body);font-weight:600;font-size:15px;padding:10px 10px;border-radius:8px;
+    cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none;text-align:center}
+  @media(max-width:480px){.tab{font-size:13px;gap:4px;padding:10px 4px}.tab .flag{font-size:14px}}
   .tab .flag{font-size:16px}
-  #t-us:checked ~ .tabbar label[for="t-us"], #t-kr:checked ~ .tabbar label[for="t-kr"]{background:var(--panel);color:var(--hi);box-shadow:inset 0 0 0 1px var(--line)}
+  #t-us:checked ~ .tabbar label[for="t-us"], #t-kr:checked ~ .tabbar label[for="t-kr"], #t-wl:checked ~ .tabbar label[for="t-wl"]{background:var(--panel);color:var(--hi);box-shadow:inset 0 0 0 1px var(--line)}
   .pane{display:none}
   #t-us:checked ~ .content .pane-us{display:block}
   #t-kr:checked ~ .content .pane-kr{display:block}
+  #t-wl:checked ~ .content .pane-wl{display:block}
   .hero{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:20px 20px 22px;margin-bottom:14px}
   .hero .top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
   .hero .asof{font-family:var(--mono);font-size:11.5px;color:var(--dim);text-align:right}.hero .asof b{color:var(--mid);font-weight:500}
@@ -476,28 +646,75 @@ PAGE = '''<!DOCTYPE html>
   .sline:first-of-type{padding-top:2px}.sline:last-child{border-bottom:none}.sline b{color:var(--hi);font-weight:600}
   .sline .th{font-family:var(--mono);font-size:12px;color:var(--steel)}
   .sline .now-red{color:var(--red);font-weight:600}.sline .now-amber{color:var(--amber);font-weight:600}.sline .now-green{color:var(--green);font-weight:600}
+  /* 관심 종목 탭 */
+  .whero{padding:18px 16px 18px}.whero .eyebrow{font-size:12px}.wtitle{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.25;margin:8px 0 6px;letter-spacing:-.01em}
+  .wasof{font-family:var(--mono);font-size:12.5px;color:var(--mid)}.wasof b{color:var(--hi);font-weight:500}
+  .wnote{font-size:13.5px;color:var(--mid);margin:10px 0 14px;overflow-wrap:anywhere}
+  .wsum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .wsum-item{border:1px solid var(--line);border-radius:10px;background:rgba(11,16,23,.35);padding:8px 4px;text-align:center;min-width:0}
+  .wsum-item b{display:block;font-family:var(--disp);font-size:22px;line-height:1.1}.wsum-item span{font-size:12px;color:var(--mid);overflow-wrap:anywhere}
+  .wsum-item.w-fav b{color:var(--green)}.wsum-item.w-wait b{color:var(--steel)}.wsum-item.w-warn b{color:var(--amber)}.wsum-item.w-na b{color:var(--dim)}
+  .wfresh{display:inline-block;font-family:var(--mono);font-size:12px;border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--mid);margin-left:4px}
+  .wfresh.fresh{color:var(--green);border-color:rgba(79,178,134,.4)}.wfresh.delayed,.wfresh.unknown{color:var(--amber);border-color:rgba(217,164,65,.4)}.wfresh.stale{color:var(--red);border-color:rgba(224,106,92,.4)}
+  .wlist{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:14px}@media(min-width:900px){.wlist{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  .wcard{min-width:0;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:15px 15px 13px;position:relative;overflow:hidden}
+  .wcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--dim)}
+  .wcard.w-fav::before{background:var(--green)}.wcard.w-wait::before{background:var(--steel)}.wcard.w-warn::before{background:var(--amber)}
+  .whead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.wid{min-width:0}
+  .wname{display:block;font-size:17px;font-weight:600;line-height:1.3}.wsym{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+  .wscore{text-align:right;flex:none}.wlabel{display:block;font-family:var(--disp);font-weight:700;font-size:24px;line-height:1.1}
+  .w-fav .wlabel{color:var(--green)}.w-wait .wlabel{color:var(--steel)}.w-warn .wlabel{color:var(--amber)}.w-na .wlabel{color:var(--dim);font-size:18px}
+  .wnum{font-family:var(--mono);font-size:13px;color:var(--mid)}.wnum b{font-size:20px;color:var(--hi);font-weight:600}.wnum small{font-size:12px;color:var(--dim)}
+  .wprice{margin-top:10px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.wprice b{font-family:var(--disp);font-size:26px;font-weight:700;letter-spacing:-.01em}.wprice span{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+  .wmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-family:var(--mono);font-size:12px;color:var(--mid)}.wmeta .wfresh{margin-left:0}
+  .wwarn{margin-top:10px;font-size:13px;line-height:1.5;color:var(--red);background:rgba(224,106,92,.08);border:1px solid rgba(224,106,92,.3);border-radius:8px;padding:8px 10px}
+  .wwarn.soft{color:var(--amber);background:rgba(217,164,65,.08);border-color:rgba(217,164,65,.3)}
+  .wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+  .wm{border:1px solid rgba(32,42,56,.9);border-radius:10px;background:rgba(11,16,23,.35);padding:7px 9px;min-width:0}
+  .wk{display:block;font-family:var(--mono);font-size:12px;color:var(--dim)}.wv{display:block;font-size:14px;font-weight:600;color:var(--hi);overflow-wrap:anywhere}
+  .wv.pos{color:var(--green)}.wv.neg{color:var(--red)}
+  .wchips{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .wchips li{font-size:12.5px;line-height:1.35;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mid);min-width:0;overflow-wrap:anywhere}
+  .wchips li.pos{color:var(--green);border-color:rgba(79,178,134,.4);background:rgba(79,178,134,.07)}
+  .wchips li.neg{color:var(--amber);border-color:rgba(217,164,65,.4);background:rgba(217,164,65,.07)}
+  .wfoot{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--dim);line-height:1.5}
+  .wformula{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);margin-top:2px}
+  .wformula summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;padding:10px 16px;font-size:14px;font-weight:600;color:var(--mid)}
+  .wformula summary::-webkit-details-marker{display:none}.wformula[open] summary{color:var(--steel)}
+  .wf-body{padding:0 16px 14px;font-size:13px;color:var(--mid);line-height:1.6;overflow-wrap:anywhere}.wf-body b{display:block;color:var(--hi);margin:10px 0 4px}
+  .pane-wl .srcs{font-size:12px}
+  .wf-body ol,.wf-body ul{margin:0 0 0 18px}.wf-body li{margin-bottom:4px}
   .disclaimer{margin-top:14px;font-size:11.5px;color:var(--dim);line-height:1.55}
   .srcs{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:#3F4C5E;line-height:1.7}
 </style>
 </head><body><div class="wrap">
   <input type="radio" name="tab" id="t-us" class="tabs-radio" checked>
   <input type="radio" name="tab" id="t-kr" class="tabs-radio">
+  <input type="radio" name="tab" id="t-wl" class="tabs-radio">
   <div class="tabbar">
     <label class="tab" for="t-us"><span class="flag">🇺🇸</span> 미국 증시</label>
     <label class="tab" for="t-kr"><span class="flag">🇰🇷</span> 국내 증시</label>
+    <label class="tab" for="t-wl">📌 관심 종목</label>
   </div>
-  <div class="content">__US____KR__</div>
+  <div class="content">__US____KR____WL__</div>
 </div></body></html>'''
+
+def build_page(data):
+    panes = {"US": pane_html("us", data), "KR": pane_html("kr", data), "WL": watchlist_pane_html(data)}
+    # 한 번에 치환: 동적 값에 "__KR__" 같은 문자열이 있어도 다른 자리표시자가 오염되지 않는다.
+    return re.sub(r"__(US|KR|WL)__", lambda m: panes[m.group(1)], PAGE)
 
 def main():
     with open(os.path.join(HERE,"data.json"),encoding="utf-8") as f:
         data=json.load(f)
-    page=PAGE.replace("__US__",pane_html("us",data)).replace("__KR__",pane_html("kr",data))
+    page=build_page(data)
     out=os.path.join(HERE,"dashboard.html")
     open(out,"w",encoding="utf-8").write(page)
     for mkt in ("us","kr"):
         inds,pos,ex=compute(mkt,data)
         print(f"[{mkt}] pos={pos} -> {band(pos)[0]}  exit={ex}")
+    items = (data.get("watchlist") or {}).get("items") or []
+    print("[watchlist]", ", ".join(f"{i.get('symbol')}={i.get('label') or '데이터 없음'}({i.get('status')})" for i in items if isinstance(i, dict)) or "없음")
     print("OK ->",out)
 
 if __name__=="__main__": main()

@@ -5,22 +5,27 @@
 - 실행: python3 fetch_data.py  ->  data.json의 자동 지표를 최신값으로 갱신
 - API 키 불필요: FRED는 공개 CSV(fredgraph.csv), 환율은 open.er-api.com, CAPE는 multpl 파싱
 - 자동 갱신 대상: us.hy, us.vix, us.cape, us.real_yield, us.trend(SP500 200일선), kr.fx
+- 관심 종목(watchlist): Yahoo chart, 종목별 독립 갱신 (watchlist.py)
 - 수동 유지: kr.valuation/flows/bok/vol, us.breadth (무료 소스 없음 → 기존값 유지, src_date로 구분)
 - 실패한 지표는 기존값을 그대로 두고 stderr에 기록 (파이프라인 전체는 계속 진행)
 """
-import json, os, re, subprocess, sys
+import json, os, re, subprocess, sys, time
 from datetime import datetime, timezone, timedelta
+
+import watchlist as wl
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KST = timezone(timedelta(hours=9))
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
-def fetch(url, timeout=30, browser_ua=False):
+def fetch(url, timeout=30, browser_ua=False, https_only=False):
     # urllib은 FRED에서 간헐 타임아웃 → curl 사용 (로컬·GitHub 러너 모두 내장)
     # FRED는 브라우저 UA를 보내면 빈 응답/차단 → 기본 curl UA 사용. multpl은 반대로 브라우저 UA 필요.
     cmd = ["curl", "-sL", "--max-time", str(timeout)]
     if browser_ua:
         cmd += ["-A", UA]
+    if https_only:  # 리다이렉트 포함 HTTPS만 허용
+        cmd += ["--proto", "=https", "--proto-redir", "=https"]
     r = subprocess.run(cmd + [url], capture_output=True, text=True)
     if r.returncode != 0 or not r.stdout:
         raise ConnectionError(f"curl failed ({r.returncode}): {url}")
@@ -177,13 +182,23 @@ def upd_cape(d):
     d["us"]["cape"].update({"num": v, "val": f"{label} · CAPE {v:.1f}",
                             "src_date": datetime.now(KST).strftime("%m-%d")})
 
+def upd_watchlist(d, fetcher=None, now_ts=None):
+    """관심 종목 3개를 종목별로 독립 갱신(Yahoo chart, 키 불필요). 실패 종목은 이전 값을 stale로 보존."""
+    fetcher = fetcher or (lambda url: fetch(url, browser_ua=True, https_only=True))
+    log = lambda msg: print(msg, file=sys.stderr)
+    now_ts = int(time.time()) if now_ts is None else now_ts
+    d["watchlist"] = wl.refresh_watchlist(fetcher, d.get("watchlist"), now_ts, log)
+
+STEPS = [("hy", upd_hy), ("vix", upd_vix), ("trend_us", upd_trend_us),
+         ("real_yield", upd_real_yield), ("fx", upd_fx), ("cape", upd_cape),
+         ("watchlist", upd_watchlist)]
+
 def main():
     path = os.path.join(HERE, "data.json")
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     ok, failed = [], []
-    for name, fn in [("hy", upd_hy), ("vix", upd_vix), ("trend_us", upd_trend_us),
-                     ("real_yield", upd_real_yield), ("fx", upd_fx), ("cape", upd_cape)]:
+    for name, fn in STEPS:
         try:
             fn(data)
             ok.append(name)
