@@ -199,9 +199,14 @@ def compute_flows(client, now_kst=None):
     params = {"interval": "1d", "count": str(kf.REQUEST_COUNT)}
     body = client.get("/api/v1/market-indicators/KOSPI/investor-trading", params)
     records = body["records"]
-    flows = kf.compute_flows_from_records(records, now_kst)
+    candle_params = {"interval": "1d", "count": "40"}
+    candles = client.get("/api/v1/market-indicators/KOSPI/candles", candle_params)["candles"]
+    trading_dates = [c["timestamp"] for c in candles]
+    flows = kf.compute_flows_from_records(records, now_kst, trading_dates=trading_dates)
     raw = {"endpoint": "/api/v1/market-indicators/KOSPI/investor-trading", "params": params,
-           "observed_at": flows["observed_at"], "records": records}
+           "observed_at": flows["observed_at"], "records": records,
+           "trading_day_reference": {"endpoint": "/api/v1/market-indicators/KOSPI/candles",
+                                     "params": candle_params, "dates": trading_dates}}
     return flows, raw
 
 

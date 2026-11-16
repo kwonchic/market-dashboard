@@ -8,7 +8,7 @@
 - 동시 실행 잠금, GitHub writer 경쟁(push 거절 후 재구성 재시도)
 - force push 미사용
 """
-import json, os, shutil, subprocess, sys, tempfile, unittest
+import json, os, shutil, subprocess, sys, tempfile, time, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -194,6 +194,82 @@ class UpdateScript(unittest.TestCase):
         os.makedirs(os.path.join(self.state, "run.lock"))
         open(os.path.join(self.state, "run.lock", "pid"), "w").write("999999")
         self.assertEqual(self.run_script(self.ok_cmd()), 0)
+
+    def test_old_live_lock_is_never_stolen(self):
+        lock = os.path.join(self.state, "run.lock")
+        os.makedirs(lock)
+        open(os.path.join(lock, "pid"), "w").write(str(os.getpid()))
+        os.utime(lock, (1, 1))
+        before = self.remote_head()
+        self.assertEqual(self.run_script(self.ok_cmd()), 30)
+        self.assertTrue(os.path.isdir(lock))
+        self.assertEqual(open(os.path.join(lock, "pid")).read(), str(os.getpid()))
+        self.assertEqual(self.remote_head(), before)
+
+    def test_unknown_old_lock_fails_closed(self):
+        lock = os.path.join(self.state, "run.lock")
+        os.makedirs(lock); os.utime(lock, (1, 1))
+        self.assertEqual(self.run_script(self.ok_cmd()), 30)
+        self.assertTrue(os.path.isdir(lock))
+
+    def test_cleanup_does_not_remove_replacement_lock(self):
+        lock = os.path.join(self.state, "run.lock")
+        cmd = f'rm -rf "{lock}"; mkdir "{lock}"; printf other-owner > "{lock}/owner"; printf {os.getpid()} > "{lock}/pid"; exit 11'
+        self.assertEqual(self.run_script(cmd), 11)
+        self.assertEqual(open(os.path.join(lock, "owner")).read(), "other-owner")
+
+    def test_kernel_lock_survives_helper_and_serializes_stale_reclaim(self):
+        lock = os.path.join(self.state, "run.lock")
+        os.makedirs(lock); open(os.path.join(lock, "pid"), "w").write("999999")
+        ready = os.path.join(self.tmp, "collector-ready")
+        release = os.path.join(self.tmp, "collector-release")
+        cmd = f'touch "{ready}"; while [ ! -e "{release}" ]; do sleep 0.05; done; ' + self.ok_cmd()
+        first = subprocess.Popen(["bash", SCRIPT], env=self.env(cmd), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            deadline = time.monotonic() + 10
+            while not os.path.exists(ready) and time.monotonic() < deadline:
+                time.sleep(.05)
+            self.assertTrue(os.path.exists(ready))
+            self.assertEqual(self.run_script(self.ok_cmd()), 30)
+            open(release, "w").close()
+            self.assertEqual(first.wait(timeout=20), 0)
+        finally:
+            open(release, "w").close()
+            first.wait(timeout=20)
+
+    def assert_conflict_collects_without_push(self):
+        before = self.remote_head()
+        self.assertEqual(self.run_script(self.ok_cmd()), 23)
+        self.assertEqual(self.remote_head(), before)
+        self.assertEqual(self.status()["last_result"], "conflict_blocked")
+        self.assertTrue(os.path.getsize(self.status()["last_artifact"]) > 0)
+
+    def test_git_operation_markers_block_deployment_not_collection(self):
+        for marker in ("MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "REBASE_HEAD", "rebase-merge", "rebase-apply", "sequencer"):
+            with self.subTest(marker=marker):
+                path = os.path.join(self.live, ".git", marker)
+                if marker in ("rebase-merge", "rebase-apply", "sequencer"):
+                    os.mkdir(path)
+                else:
+                    open(path, "w").close()
+                try: self.assert_conflict_collects_without_push()
+                finally:
+                    if os.path.isdir(path): os.rmdir(path)
+                    else: os.unlink(path)
+
+    def test_unmerged_index_without_marker_blocks_deployment(self):
+        head = git(self.live, "rev-parse", "HEAD:data.json").stdout.strip()
+        git(self.live, "update-index", "--force-remove", "data.json")
+        subprocess.run(["git", "-C", self.live, "update-index", "--index-info"],
+                       input=f"100644 {head} 1\tdata.json\n100644 {head} 2\tdata.json\n", text=True, check=True)
+        self.assert_conflict_collects_without_push()
+
+    def test_conflict_appearing_during_collection_blocks_push(self):
+        cmd = self.ok_cmd() + f'; touch "{self.live}/.git/CHERRY_PICK_HEAD"'
+        before = self.remote_head()
+        self.assertEqual(self.run_script(cmd), 23)
+        self.assertEqual(self.remote_head(), before)
+        self.assertTrue(os.path.exists(os.path.join(self.state, "latest_collect.json")))
 
     def test_github_writer_race_retries_on_fresh_remote(self):
         # 수집 도중 GitHub writer가 원격을 앞서가게 만든다 → 첫 push 거절(non-ff) → 재fetch 후 성공

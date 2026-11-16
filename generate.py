@@ -189,7 +189,7 @@ def compute(mkt,data):
     pos=max(8,min(92,round(pos)))
     return inds,pos,exit_hits
 
-FLOWS_STATE_TEXT = {"fresh": "최신", "delayed": "지연", "stale": "갱신 실패·오래됨", "unknown": "기준일 확인 필요"}
+FLOWS_STATE_TEXT = {"fresh": "최신", "delayed": "지연", "stale": "갱신 실패·오래됨", "unknown": "기준일 확인 필요", "invalid": "잘못된 기준일"}
 
 def _gate_flows(v, data):
     """수급 기준일(연도 포함)과 페이지 생성 시각을 분리해 신선도 판정.
@@ -208,11 +208,11 @@ def _gate_flows(v, data):
     if v.get("collect_status") == "failed":
         extra = f' · 마지막 수집 실패 {_html.escape(str(v.get("last_attempt_at") or ""))}'
     v["basis_text"] = f'수급 기준일 <b>{_html.escape(str(basis))}</b>{_html.escape(rng)}'
-    if st["state"] in ("stale", "unknown") or (st["state"] == "delayed"):
+    if st["state"] in ("stale", "unknown", "invalid") or (st["state"] == "delayed"):
         exp = f' · 기대 기준일 {st["expected"]}' if st.get("expected") else ""
         v["warn_html"] = (f'<span class="flows-warn {st["state"]}">⚠ 외국인 수급 {label} · '
                           f'{v["basis_text"]}{exp}{extra} · 최신 판단 근거로 쓰지 마세요</span>')
-    if st["state"] in ("stale", "unknown"):
+    if st["state"] in ("stale", "unknown", "invalid"):
         v["judge_tone"] = v["tone"]
         v["tone"] = "gray"
         v["val"] = f'⚠ {label} · (이전 값) {v.get("val","")}'
@@ -270,7 +270,7 @@ def stance_of(mkt,pos,data=None):
     flows=kr.get("flows",{}).get("val","외국인 수급 경고")
     _fl=dict(kr.get("flows",{}))
     _gate_flows(_fl, data)
-    if _fl["fresh"]["state"] in ("stale","unknown"):
+    if _fl["fresh"]["state"] in ("stale","unknown","invalid"):
         flows_part = f'외국인 수급은 <b>기준일 {_html.escape(str(_fl.get("src_date_iso") or _fl.get("src_date","?")))} 이후 미갱신</b>이라 판단에서 제외했고'
     else:
         flows_part = f'토스증권 실측상 <b>{flows}</b>'
@@ -297,7 +297,7 @@ def tiles_html(mkt,inds,exit_hits):
     else:
         fl=inds.get("flows",{})
         fl_state=(fl.get("fresh") or {}).get("state")
-        if fl_state in ("stale","unknown"):
+        if fl_state in ("stale","unknown","invalid"):
             buy_meta="싸지만 외국인 수급 최신 기준일 미확인"
         elif fl.get("tone")=="green":
             buy_meta="싸고 외국인 순매수 지속"
@@ -342,7 +342,7 @@ def pm_guardian_html(mkt, inds, pos, exit_hits, data, st):
             if sd.startswith("07-") or sd.startswith("07/"):
                 stale.append(inds[k]["name"].split(" (")[0])
     fl_state = (inds.get("flows", {}).get("fresh") or {}).get("state")
-    if fl_state in ("stale", "unknown", "delayed"):
+    if fl_state in ("stale", "unknown", "invalid", "delayed"):
         nm = inds["flows"]["name"].split(" (")[0]
         if nm not in stale:
             stale.insert(0, nm)

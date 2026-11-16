@@ -6,7 +6,8 @@ stdlib 전용(네트워크·자격증명 없음). 수집기(scripts/fetch_toss_m
 화면 생성기(generate.py), 테스트가 공통으로 쓴다.
 
 원칙
-- 거래일은 API가 돌려준 레코드가 정의한다(평일 휴장일은 레코드가 없을 뿐 정상).
+- 운영 수집은 별도 KOSPI 일봉 날짜와 최신 완료 20일을 정확히 대조한다.
+- 날짜 참조 없이 집계하는 호환 경로는 unverified이며 최신 판단에서 제외한다.
 - 당일 레코드는 KST 기준 장 마감 후 확정 시각(COMPLETE_CUTOFF) 이전이면 미완료로 제외.
 - 중복(같은 날짜)·주말·결측·비정상 단위는 조용히 고치지 않고 FlowsDataError.
 - 정확히 WINDOW(20)개 완료 거래일이 없으면 실패. 실패 시 이전 값은 수정하지 않고 상태만 표시.
@@ -99,8 +100,34 @@ def select_completed_records(records, now_kst, window=WINDOW):
     return out
 
 
-def compute_flows_from_records(records, now_kst, source="toss-openapi:/api/v1/market-indicators/KOSPI/investor-trading"):
+def completed_candle_dates(trading_dates, now_kst, window=WINDOW):
+    """Independent KOSPI candle dates, never a weekday/holiday estimate."""
+    if not isinstance(trading_dates, list):
+        raise FlowsDataError("missing KOSPI candle dates")
+    now = now_kst.astimezone(KST)
+    days = []
+    for raw in trading_dates:
+        d = _kst_date(raw)
+        if d > now.date() or d.weekday() >= 5:
+            raise FlowsDataError("invalid KOSPI candle date")
+        if d == now.date() and now.time() < COMPLETE_CUTOFF:
+            continue
+        if d in days:
+            raise FlowsDataError("duplicate KOSPI candle date")
+        days.append(d)
+    days.sort(reverse=True)
+    if len(days) < window:
+        raise FlowsDataError("insufficient KOSPI candle dates")
+    return [d.isoformat() for d in days[:window]]
+
+
+def compute_flows_from_records(records, now_kst, source="toss-openapi:/api/v1/market-indicators/KOSPI/investor-trading", trading_dates=None):
     sel = select_completed_records(records, now_kst)
+    if trading_dates is not None:
+        expected = completed_candle_dates(trading_dates, now_kst)
+        actual = [r["date"] for r in sel]
+        if actual != expected:
+            raise FlowsDataError("completed trading-day window differs from KOSPI candles")
     f5 = sum(r["foreigner"]["net"] for r in sel[:SHORT]) / 1e12
     f20 = sum(r["foreigner"]["net"] for r in sel) / 1e12
     i5 = sum(r["institution"]["net"] for r in sel[:SHORT]) / 1e12
@@ -122,6 +149,8 @@ def compute_flows_from_records(records, now_kst, source="toss-openapi:/api/v1/ma
         "source": source,
         "observed_at": now_kst.astimezone(KST).isoformat(timespec="seconds"),
         "collect_status": "ok",
+        "window_validation": "kospi_candles" if trading_dates is not None else "unverified",
+        "validated_trading_dates": [r["date"] for r in sel] if trading_dates is not None else [],
     }
 
 
@@ -195,6 +224,15 @@ def flows_freshness(flows, now_kst, stale_after=2):
     try:
         src = date.fromisoformat(str(iso)[:10])
     except ValueError:
+        out["state"] = "unknown"
+        return out
+    if src > now_kst.astimezone(KST).date() or src > expected:
+        out["state"] = "invalid"
+        return out
+    if failed:
+        out["state"] = "stale"
+        return out
+    if (flows or {}).get("window_validation") == "unverified":
         out["state"] = "unknown"
         return out
     lag = _weekdays_between(src, expected) if src < expected else 0
