@@ -7,6 +7,12 @@ on:
     - cron: '50 14 * * 0-5'   # backup: 14:50 UTC = 23:50 KST (GitHub schedule miss 보완)
   workflow_dispatch:
 
+# 로컬 launchd writer(scripts/update_toss_market_dashboard.sh)와 같은 main/data.json을 쓴다.
+# 같은 워크플로 중복 실행은 직렬화하고, push 전 원격 최신 위로 rebase해 non-ff 거절을 줄인다(force 없음).
+concurrency:
+  group: market-dashboard-data-writer
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,6 +40,12 @@ jobs:
               print(f'freshness check failed: asOf={as_of}, today_kst={today}')
               sys.exit(1)
           print(f'freshness ok: asOf={as_of}')
+          # 경고만(실패 아님): asOf는 페이지 생성일일 뿐 수급 최신을 뜻하지 않는다
+          import kr_flows as kf
+          now = kf.parse_generated(data)
+          st = kf.flows_freshness(data.get('kr', {}).get('flows', {}), now)
+          print(f"::warning::kr.flows state={st['state']} src={st['src']} expected={st['expected']}" if st['state'] != 'fresh'
+                else f"kr.flows fresh src={st['src']}")
           PY
       - name: commit
         run: |
@@ -41,4 +53,8 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add -A
           git commit -m "auto update $(TZ=Asia/Seoul date +%F)" || echo "no change"
-          git push
+          for i in 1 2 3; do
+            if git pull --rebase origin main; then git push && exit 0; else git rebase --abort || true; fi
+            echo "push retry $i"; sleep 5
+          done
+          exit 1

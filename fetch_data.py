@@ -219,7 +219,10 @@ def main():
         except Exception as e:
             failed.append(name)
             print(f"[fetch fail] {name}: {e}", file=sys.stderr)
-    data["asOf"] = datetime.now(KST).strftime("%Y-%m-%d")
+    now = datetime.now(KST)
+    data["asOf"] = now.strftime("%Y-%m-%d")
+    # 페이지 생성 시각. 국내 수급(kr.flows)은 여기서 갱신하지 않으므로 화면은 수급 기준일을 따로 판정한다.
+    data["generatedAt"] = now.isoformat(timespec="seconds")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"updated: {', '.join(ok) or '없음'} / kept previous: {', '.join(failed) or '없음'}")

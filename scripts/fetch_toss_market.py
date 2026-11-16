@@ -6,7 +6,10 @@
 - 계좌/자산/주문/조건주문 API는 호출하지 않는다 (market-only guard로 강제 차단).
 - Client ID/Secret/access token은 어떤 경로로도 출력·저장하지 않는다.
 - 실행: TOSS_CLIENT_ID / TOSS_CLIENT_SECRET 환경변수로 자격증명 주입 후
-    python3 scripts/fetch_toss_market.py
+    python3 scripts/fetch_toss_market.py --collect-out ARTIFACT.json   # 수집만(데이터 파일 안 건드림)
+    python3 scripts/fetch_toss_market.py --apply ARTIFACT.json --data data.json   # 적용만(네트워크·자격증명 불필요)
+    python3 scripts/fetch_toss_market.py   # (구) 수집+적용을 저장소 data.json에 바로
+- 종료코드(수집): 0=전부 성공, 10=일부 실패(kr.flows 실패 포함), 11=전부 실패/클라이언트 초기화 실패
 """
 import json
 import os
@@ -16,9 +19,14 @@ import sys
 import time
 from datetime import datetime, timezone, timedelta
 
-import requests
-
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, HERE)
+import kr_flows as kf  # noqa: E402  (stdlib 전용: 완료 20거래일 선별·검증·집계)
+
+try:
+    import requests
+except ImportError:  # --apply 경로는 requests 없이도 동작해야 한다
+    requests = None
 KST = timezone(timedelta(hours=9))
 
 BASE = os.getenv("TOSS_API_BASE", "https://openapi.tossinvest.com")
@@ -185,34 +193,16 @@ def compute_vol(dates, closes):
     }
 
 
-def compute_flows(client):
-    body = client.get("/api/v1/market-indicators/KOSPI/investor-trading", {"interval": "1d", "count": "20"})
-    records = body["records"]  # 최신 -> 과거
-    date = records[0]["date"]
-
-    def net_sum(key, n):
-        total = 0.0
-        for r in records[:n]:
-            leg = r.get(key, {})
-            total += float(leg.get("buyAmount", 0)) - float(leg.get("sellAmount", 0))
-        return total
-
-    f5 = net_sum("foreigner", 5) / 1e12
-    f20 = net_sum("foreigner", 20) / 1e12
-    i5 = net_sum("institution", 5) / 1e12
-
-    if f5 > 0 and f20 > 0:
-        tone, val = "green", "외국인 순매수 지속"
-    elif f5 < 0 and f20 < 0:
-        tone, val = "red", "외국인 순매도 지속"
-    else:
-        tone, val = "amber", "외국인 순매수/도 전환 구간"
-
-    return {
-        "num": round(f5, 2), "auto": True, "tone": tone, "val": val,
-        "note": f"외국인 5일 {f5:+.2f}조 · 20일 {f20:+.2f}조 · 기관 5일 {i5:+.2f}조",
-        "src_date": date[5:7] + "-" + date[8:10],
-    }
+def compute_flows(client, now_kst=None):
+    """완료 거래일 20개 기준 외국인 5/20일·기관 5일 순매수(조원). 원자료(records)도 함께 반환."""
+    now_kst = now_kst or datetime.now(KST)
+    params = {"interval": "1d", "count": str(kf.REQUEST_COUNT)}
+    body = client.get("/api/v1/market-indicators/KOSPI/investor-trading", params)
+    records = body["records"]
+    flows = kf.compute_flows_from_records(records, now_kst)
+    raw = {"endpoint": "/api/v1/market-indicators/KOSPI/investor-trading", "params": params,
+           "observed_at": flows["observed_at"], "records": records}
+    return flows, raw
 
 
 def compute_fx(client):
@@ -323,70 +313,101 @@ def fetch_bok_base_rate():
     }
 
 
-def main():
-    client = TossClient()
-    path = os.path.join(HERE, "data.json")
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
+def collect(client, now_kst=None):
+    """시장 데이터만 조회해 아티팩트(dict)로 반환. data.json은 건드리지 않는다."""
+    now_kst = now_kst or datetime.now(KST)
+    fields, failed, raw = {}, {}, {}
 
-    ok, failed = [], []
+    def step(names, fn):
+        try:
+            out = fn()
+            for n, v in zip(names, out):
+                fields[n] = v
+        except Exception as e:  # 실패는 기록만, 다른 지표는 계속
+            for n in names:
+                failed[n] = redact(str(e), [CLIENT_ID, CLIENT_SECRET])[:300]
 
-    try:
+    def trend_vol():
         dates, closes = fetch_candles(client, "KOSPI")
-        trend = compute_trend(dates, closes)
-        data["kr"]["trend"].update(trend)
-        ok.append("kr.trend")
-        vol = compute_vol(dates, closes)
-        data["kr"]["vol"].update(vol)
-        ok.append("kr.vol")
-    except Exception as e:
-        failed.append(f"kr.trend/vol: {e}")
+        return compute_trend(dates, closes), compute_vol(dates, closes)
 
-    try:
-        flows = compute_flows(client)
-        data["kr"]["flows"].update(flows)
-        ok.append("kr.flows")
-    except Exception as e:
-        failed.append(f"kr.flows: {e}")
+    def flows():
+        f, r = compute_flows(client, now_kst)
+        raw["kr.flows"] = r
+        return (f,)
 
-    try:
-        fx = compute_fx(client)
-        data["kr"]["fx"].update(fx)
-        ok.append("kr.fx")
-    except Exception as e:
-        failed.append(f"kr.fx: {e}")
+    step(("kr.trend", "kr.vol"), trend_vol)
+    step(("kr.flows",), flows)
+    step(("kr.fx",), lambda: (compute_fx(client),))
+    step(("kr.ranking",), lambda: (compute_ranking(client),))
+    step(("kr.samsung_pbr",), lambda: (fetch_samsung_pbr(),))
+    step(("kr.bok",), lambda: (fetch_bok_base_rate(),))
+    return {"schema": 1, "collected_at": now_kst.isoformat(timespec="seconds"),
+            "fields": fields, "failed": failed, "raw": raw}
 
-    try:
-        data["kr"]["ranking"] = compute_ranking(client)
-        ok.append("kr.ranking")
-    except Exception as e:
-        failed.append(f"kr.ranking: {e}")
 
-    try:
-        data["kr"]["samsung_pbr"] = fetch_samsung_pbr()
-        ok.append("kr.samsung_pbr")
-    except Exception as e:
-        failed.append(f"kr.samsung_pbr: {e}")
+def _write_json_atomic(path, obj):
+    tmp = f"{path}.tmp.{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
 
-    try:
-        data["kr"]["bok"] = fetch_bok_base_rate()
-        ok.append("kr.bok")
-    except Exception as e:
-        failed.append(f"kr.bok: {e}")
 
-    data["asOf"] = datetime.now(KST).strftime("%Y-%m-%d")
-    data["note_freshness"] = "값은 각 소스의 최신 관측 기준(국내 가격·수급은 토스증권 Open API, 삼성전자 PBR은 Valueline, 기준금리는 한국은행). 스케줄 실행 시마다 새로 조회됩니다."
+def _exit_code(artifact):
+    if not artifact["fields"]:
+        return 11
+    return 10 if artifact["failed"] else 0
 
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print(f"updated: {', '.join(ok) or '없음'}")
-    if failed:
+def _report(artifact):
+    print(f"updated: {', '.join(artifact['fields']) or '없음'}")
+    if artifact["failed"]:
         print("failed (기존값 유지):", file=sys.stderr)
-        for f_ in failed:
-            print(f"  - {f_}", file=sys.stderr)
+        for k, v in artifact["failed"].items():
+            print(f"  - {k}: {v}", file=sys.stderr)
     print("manual (기존값 유지): kr.valuation")
 
 
+def apply_to_file(artifact, data_path, now_kst=None):
+    now_kst = now_kst or datetime.now(KST)
+    with open(data_path, encoding="utf-8") as f:
+        data = json.load(f)
+    kf.apply_artifact(data, artifact, now_kst)
+    data["note_freshness"] = ("페이지 생성 시각과 지표별 기준일은 다르다. 국내 수급은 '수급 기준일'(완료 거래일, 연도 포함)을 "
+                              "따로 표시하며, 수집 실패 시 이전 값을 지연/실패로 표시한다. 출처: 국내 가격·수급 토스증권 Open API, "
+                              "삼성전자 PBR Valueline, 기준금리 한국은행.")
+    _write_json_atomic(data_path, data)
+
+
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--collect-out")
+    ap.add_argument("--apply")
+    ap.add_argument("--data", default=os.path.join(HERE, "data.json"))
+    a = ap.parse_args(argv)
+    if a.apply:
+        with open(a.apply, encoding="utf-8") as f:
+            artifact = json.load(f)
+        apply_to_file(artifact, a.data)
+        print(f"applied {a.apply} -> {a.data}")
+        return 0
+    try:
+        client = TossClient()
+        artifact = collect(client)
+    except Exception as e:
+        now = datetime.now(KST)
+        artifact = {"schema": 1, "collected_at": now.isoformat(timespec="seconds"), "fields": {},
+                    "failed": {"kr.client": redact(str(e), [CLIENT_ID, CLIENT_SECRET])[:300],
+                               "kr.flows": "client_unavailable"}, "raw": {}}
+    _report(artifact)
+    if a.collect_out:
+        _write_json_atomic(a.collect_out, artifact)
+        print(f"artifact -> {a.collect_out}")
+    else:
+        apply_to_file(artifact, a.data)
+    return _exit_code(artifact)
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

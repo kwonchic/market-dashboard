@@ -10,6 +10,7 @@
 import json, os, re, html as _html
 
 import watchlist as wl
+import kr_flows as kf
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -173,6 +174,8 @@ def compute(mkt,data):
     inds={}
     for key,meta in META[mkt].items():
         d=data[mkt][key]; inds[key]={**meta,**d,"tone":resolve_tone(mkt,key,d)}
+    if mkt == "kr" and "flows" in inds:
+        _gate_flows(inds["flows"], data)
     if mkt == "us":
         pos, exit_hits = compute_us_position(inds)
         return inds, pos, exit_hits
@@ -186,11 +189,43 @@ def compute(mkt,data):
     pos=max(8,min(92,round(pos)))
     return inds,pos,exit_hits
 
+FLOWS_STATE_TEXT = {"fresh": "최신", "delayed": "지연", "stale": "갱신 실패·오래됨", "unknown": "기준일 확인 필요"}
+
+def _gate_flows(v, data):
+    """수급 기준일(연도 포함)과 페이지 생성 시각을 분리해 신선도 판정.
+
+    asOf(오늘)만으로 수급을 최신으로 보지 않는다. stale/unknown이면 판단(미터)에서 제외(tone=gray)하고
+    값 앞에 경고를 붙인다. 이전 값 자체는 수정하지 않는다.
+    """
+    now = kf.parse_generated(data)
+    st = kf.flows_freshness(v, now) if now else {"state": "unknown", "expected": None, "src": v.get("src_date_iso")}
+    v["fresh"] = st
+    basis = v.get("src_date_iso") or (f'{v.get("src_date","?")} (연도 미상)')
+    w = v.get("window") or {}
+    rng = f' · {w["start"]}~{w["end"]} · {w["trading_days"]}거래일' if w.get("start") and w.get("end") else ""
+    label = FLOWS_STATE_TEXT.get(st["state"], "기준일 확인 필요")
+    extra = ""
+    if v.get("collect_status") == "failed":
+        extra = f' · 마지막 수집 실패 {_html.escape(str(v.get("last_attempt_at") or ""))}'
+    v["basis_text"] = f'수급 기준일 <b>{_html.escape(str(basis))}</b>{_html.escape(rng)}'
+    if st["state"] in ("stale", "unknown") or (st["state"] == "delayed"):
+        exp = f' · 기대 기준일 {st["expected"]}' if st.get("expected") else ""
+        v["warn_html"] = (f'<span class="flows-warn {st["state"]}">⚠ 외국인 수급 {label} · '
+                          f'{v["basis_text"]}{exp}{extra} · 최신 판단 근거로 쓰지 마세요</span>')
+    if st["state"] in ("stale", "unknown"):
+        v["judge_tone"] = v["tone"]
+        v["tone"] = "gray"
+        v["val"] = f'⚠ {label} · (이전 값) {v.get("val","")}'
+
 # ── 3) HTML 조각 렌더 ────────────────────────────────────────────────────
 def esc(s): return s  # 메타는 신뢰된 소스라 그대로 사용(의도된 인라인 태그 포함)
 
 def row_html(v):
     note = f"  <i style='color:#5C6C82'>({v['note']})</i>" if v.get("note") else ""
+    if v.get("basis_text"):
+        note += f"<br><span class='basis'>{v['basis_text']}</span>"
+    if v.get("warn_html"):
+        note += f"<br>{v['warn_html']}"
     return (f'<details class="drow">'
             f'<summary><span class="dot {v["tone"]}"></span>'
             f'<span class="dname">{v["name"]}</span>'
@@ -233,6 +268,12 @@ def stance_of(mkt,pos,data=None):
           "caveat":"핵심 지표 라이브 반영. 미터·색은 전환점 룰 v2로 자동 산출(베타)."}
     kr=data.get("kr", {}) if isinstance(data,dict) else {}
     flows=kr.get("flows",{}).get("val","외국인 수급 경고")
+    _fl=dict(kr.get("flows",{}))
+    _gate_flows(_fl, data)
+    if _fl["fresh"]["state"] in ("stale","unknown"):
+        flows_part = f'외국인 수급은 <b>기준일 {_html.escape(str(_fl.get("src_date_iso") or _fl.get("src_date","?")))} 이후 미갱신</b>이라 판단에서 제외했고'
+    else:
+        flows_part = f'토스증권 실측상 <b>{flows}</b>'
     fx=kr.get("fx",{}).get("val","원화 약세")
     vol=kr.get("vol",{}).get("val","변동성 확대")
     pbr=kr.get("samsung_pbr",{})
@@ -242,7 +283,7 @@ def stance_of(mkt,pos,data=None):
     if "인상" in str(bok.get("val", "")):
         bok_txt += " 인상"
     return {"text0":band(pos)[0].replace(" ",""),"text1":' · <span class="tone-amber">소액·분할 방어</span>',
-      "directive":f"주가는 여전히 <b>싼 편</b>(선행 PER 6.4배)이나, 토스증권 실측상 <b>{flows}</b>·"
+      "directive":f"주가는 여전히 <b>싼 편</b>(선행 PER 6.4배)이나, {flows_part}·"
                   f"<b>{bok_txt}</b>·<b>{fx}</b>·<b>{vol}</b>이 겹쳐 방어적{pbr_txt}. "
                   "추세는 아직 안 깨졌으니 전량 청산이 아니라 <b>비중 축소·소액 분할</b>.",
       "caveat":"미터·색은 기준값 규칙으로 자동 산출(베타). 가중치는 튜닝 대상."}
@@ -254,7 +295,17 @@ def tiles_html(mkt,inds,exit_hits):
            ("trim","조금씩 팔기","TRIM · 트림",f"깃발 {trim}","a","주가 비쌈 켜짐"),
            ("exit","전부 팔기","EXIT · 전량","안전" if exit_hits<2 else "경고","g" if exit_hits<2 else "r",f"위험 신호 {exit_hits} / 3")]
     else:
-        T=[("buy","사 모으기","BUY · 누적","조건부","a","싸지만 외국인 순매도 전환"),
+        fl=inds.get("flows",{})
+        fl_state=(fl.get("fresh") or {}).get("state")
+        if fl_state in ("stale","unknown"):
+            buy_meta="싸지만 외국인 수급 최신 기준일 미확인"
+        elif fl.get("tone")=="green":
+            buy_meta="싸고 외국인 순매수 지속"
+        elif fl.get("tone")=="red":
+            buy_meta="싸지만 외국인 순매도 지속"
+        else:
+            buy_meta="싸지만 외국인 순매수/도 전환 구간"
+        T=[("buy","사 모으기","BUY · 누적","조건부","a",buy_meta),
            ("trim","조금씩 팔기","TRIM · 트림","주의","a","긴축·환율·변동성 부담"),
            ("exit","전부 팔기","EXIT · 전량","추세 유지","g","200일선 이탈은 아직 아님")]
     cells="".join(f'<div class="tile {c}"><div class="tname">{n}</div><div class="torig">{o}</div>'
@@ -290,6 +341,11 @@ def pm_guardian_html(mkt, inds, pos, exit_hits, data, st):
         if sd and mmdd and not sd.endswith(mmdd) and not sd.endswith(mmdd.replace("-", "/")):
             if sd.startswith("07-") or sd.startswith("07/"):
                 stale.append(inds[k]["name"].split(" (")[0])
+    fl_state = (inds.get("flows", {}).get("fresh") or {}).get("state")
+    if fl_state in ("stale", "unknown", "delayed"):
+        nm = inds["flows"]["name"].split(" (")[0]
+        if nm not in stale:
+            stale.insert(0, nm)
 
     conflict = []
     if mkt == "us":
@@ -371,7 +427,16 @@ def pane_html(mkt,data):
         bok_val = str(bok.get("val", ""))
         bok_badge = f'<span class="badge">◆ 한은 기준금리 {bok_rate} · {bok_date} {bok_val}</span>'
         badge = '<div id="badgeWrap">'+bok_badge+pbr_badge+'</div>'
-    asof=f'데이터 기준 · <b>{data["asOf"]}</b><br>갱신 · 평일 08:30 · 16:00 · 21:30 KST · 23:50 백업'
+    gen_dt = kf.parse_generated(data)
+    asof=f'데이터 기준 · <b>{data.get("asOf","")}</b> (페이지 생성일)'
+    if data.get("generatedAt") and gen_dt:
+        asof+=f'<br>페이지 생성 · <b>{gen_dt.astimezone(kf.KST).strftime("%Y-%m-%d %H:%M KST")}</b>'
+    if mkt=="kr":
+        fl=inds.get("flows",{})
+        asof+=f'<br>{fl.get("basis_text","수급 기준일 확인 필요")}'
+        if fl.get("warn_html"):
+            asof+=f' · <span class="flows-warn {fl["fresh"]["state"]}">{FLOWS_STATE_TEXT.get(fl["fresh"]["state"])}</span>'
+    asof+='<br>지표별 기준일은 각 항목 참고 · 갱신 · 평일 08:30 · 16:00 · 21:30 KST · 23:50 백업'
     mkt_name=f'{"미국" if mkt=="us" else "국내"} 증시 · 현재 판단'
     srcs={"us":"SRC · CAPE=multpl/Shiller · 신용(HY OAS)=FRED:BAMLH0A0HYM2 · VIX=FRED:VIXCLS · 실질금리=FRED:DFII10 · 추세/상승폭=시장데이터",
           "kr":"SRC · 국내 가격/수급/환율/변동성=토스증권 Open API · 삼성전자 PBR=Valueline · 기준금리=한국은행 · 선행PER=근사(수동)"}[mkt]
@@ -676,6 +741,7 @@ PAGE = '''<!DOCTYPE html>
   .hero{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:20px 20px 22px;margin-bottom:14px}
   .hero .top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
   .hero .asof{font-family:var(--mono);font-size:11.5px;color:var(--dim);text-align:right}.hero .asof b{color:var(--mid);font-weight:500}
+  .flows-warn{color:var(--amber);font-family:var(--mono);font-size:11.5px}.flows-warn.stale,.flows-warn.unknown{color:var(--red)}.basis{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
   .badge{display:inline-block;margin-top:10px;font-size:11.5px;font-family:var(--mono);color:var(--amber);
     background:rgba(217,164,65,.1);border:1px solid rgba(217,164,65,.3);border-radius:6px;padding:4px 9px}
   .badge + .badge{margin-left:6px}.pbr-badge{color:var(--steel);background:rgba(95,168,196,.1);border-color:rgba(95,168,196,.35)}
