@@ -6,6 +6,7 @@ stdlib unittest만 사용 (GitHub 러너에서도 requests 없이 실행 가능)
 모든 수치는 mock 레코드 기반이며 실데이터 복구 증거가 아니다.
 """
 import copy, json, os, sys, unittest
+from unittest.mock import patch
 from datetime import date, datetime, timedelta, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -232,14 +233,20 @@ class FlowsFreshness(unittest.TestCase):
 
 
 def page_data(flows, as_of="2026-11-17", generated="2026-11-17T08:40:00+09:00"):
-    with open(os.path.join(ROOT, "data.json"), encoding="utf-8") as f:
-        d = json.load(f)
+    # Synthetic neutral snapshot: nightly data.json and wall-clock changes must
+    # not change the unrelated indicators or saturate this regression's meter.
+    d = {
+        mkt: {key: {"num": 0, "val": "고정 시험 지표", "tone": "gray", "auto": False}
+              for key in gen.META[mkt]}
+        for mkt in ("us", "kr")
+    }
+    d["watchlist"] = {"items": []}
     d["asOf"] = as_of
     if generated:
         d["generatedAt"] = generated
     else:
         d.pop("generatedAt", None)
-    d["kr"]["flows"] = flows
+    d["kr"]["flows"] = copy.deepcopy(flows)
     return d
 
 
@@ -273,7 +280,36 @@ class PageRendering(unittest.TestCase):
         fresh = dict(STALE_LEGACY, src_date_iso="2026-11-16", src_date="11-16", collect_status="ok")
         inds2, pos2, _ = gen.compute("kr", page_data(fresh))
         self.assertEqual(inds2["flows"]["tone"], "red")
-        self.assertNotEqual(pos, pos2)
+        self.assertEqual((pos, pos2), (50, 58))
+
+    def test_stale_exclusion_at_and_above_meter_cap(self):
+        fresh = dict(STALE_LEGACY, src_date_iso="2026-11-16", src_date="11-16", collect_status="ok")
+        # Raw pressure 74 vs82 crosses cap; 82 vs90 saturates both. Equal
+        # displayed scores at the cap are correct, not proof of a broken gate.
+        for red_keys, expected in ((('valuation', 'trend'), (74, 78)),
+                                   (('valuation', 'trend', 'vol'), (78, 78))):
+            with self.subTest(red_keys=red_keys):
+                stale_data, fresh_data = page_data(STALE_LEGACY), page_data(fresh)
+                for d in (stale_data, fresh_data):
+                    for key in red_keys:
+                        d['kr'][key]['tone'] = 'red'
+                stale_inds, stale_pos, _ = gen.compute('kr', stale_data)
+                fresh_inds, fresh_pos, _ = gen.compute('kr', fresh_data)
+                self.assertEqual(stale_inds['flows']['tone'], 'gray')
+                self.assertEqual(fresh_inds['flows']['tone'], 'red')
+                self.assertEqual((stale_pos, fresh_pos), expected)
+
+    def test_page_fixture_is_independent_of_live_file_and_clock(self):
+        with patch('builtins.open', side_effect=AssertionError('live file read')):
+            first = page_data(STALE_LEGACY)
+            second = page_data(STALE_LEGACY)
+            self.assertEqual(first, second)
+            self.assertEqual(first['generatedAt'], NOW_MORNING.isoformat())
+            self.assertEqual(kf.parse_generated(first), NOW_MORNING)
+            self.assertEqual(gen.compute('kr', first)[1], 50)
+        first['kr']['flows']['tone'] = 'green'
+        self.assertEqual(second['kr']['flows']['tone'], 'red')
+        self.assertEqual(STALE_LEGACY['tone'], 'red')
 
     def test_fresh_flows_shows_iso_basis_without_warning(self):
         fresh = dict(STALE_LEGACY, src_date_iso="2026-11-16", src_date="11-16", collect_status="ok",
