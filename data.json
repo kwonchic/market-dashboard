@@ -130,12 +130,16 @@
     },
     "bok": {
       "num": 3.0,
-      "val": "3.00%로 인상(긴축)",
-      "src_date": "09-15",
+      "val": "3.00% (마지막 변경 2026-08-27)",
+      "src_date": "08-27",
+      "rate_change_date": "2026-08-27",
+      "observed_at": "2026-11-17T18:27:16+09:00",
       "auto": true,
       "tone": "red",
-      "note": "한국은행 통화정책방향: 2.75% → 3.00% (0.25%p 인상)",
-      "source": "BOK"
+      "tone_basis": "last_rate_change",
+      "note": "한국은행 기준금리 추이표: 마지막 변경 2026-08-27, 2.75% → 3.00% (0.25%p 인상). 최근 금통위 결정일·동결 여부를 뜻하지 않음. 조회 2026-11-17T18:27:16+09:00",
+      "source": "BOK",
+      "source_url": "https://www.bok.or.kr/portal/singl/baseRate/list.do?menuNo=200656"
     },
     "vol": {
       "num": 3.3,
@@ -871,5 +875,5 @@
       }
     ]
   },
-  "generatedAt": "2026-11-17T16:05:09+09:00"
+  "generatedAt": "2026-11-17T18:27:39+09:00"
 }
