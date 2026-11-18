@@ -125,8 +125,7 @@
       "val": "~1,335원 · 안정",
       "src_date": "11-18",
       "auto": true,
-      "tone": "green",
-      "note": "validFrom 2026-11-18T08:34:57.000+09:00"
+      "tone": "green"
     },
     "bok": {
       "num": 3.0,
@@ -196,7 +195,7 @@
         "error": null,
         "src_date": "2026-11-17",
         "currency": "KRW",
-        "points": 245,
+        "points": 244,
         "quality": "ok",
         "score": 15,
         "label": "주의",
@@ -234,7 +233,7 @@
         "error": null,
         "src_date": "2026-11-17",
         "currency": "KRW",
-        "points": 245,
+        "points": 244,
         "quality": "ok",
         "score": 15,
         "label": "주의",
@@ -301,7 +300,7 @@
         "sma50": 340.4064,
         "sma200": 302.1289,
         "rsi14": 56.1,
-        "volume_ratio": 0.755
+        "volume_ratio": 0.778
       },
       {
         "symbol": "FLNC",
@@ -339,7 +338,7 @@
         "sma50": 6.7526,
         "sma200": 14.0914,
         "rsi14": 29.36,
-        "volume_ratio": 0.923
+        "volume_ratio": 0.926
       },
       {
         "symbol": "CPER",
@@ -377,7 +376,7 @@
         "sma50": 39.246,
         "sma200": 37.9708,
         "rsi14": 30.8,
-        "volume_ratio": 1.247
+        "volume_ratio": 1.258
       },
       {
         "symbol": "CRCL",
@@ -415,7 +414,7 @@
         "sma50": 80.9592,
         "sma200": 85.8204,
         "rsi14": 25.76,
-        "volume_ratio": 1.056
+        "volume_ratio": 1.064
       },
       {
         "symbol": "SKHY",
@@ -453,7 +452,7 @@
         "sma50": 161.6486,
         "sma200": null,
         "rsi14": 38.0,
-        "volume_ratio": 0.648
+        "volume_ratio": 0.678
       },
       {
         "symbol": "NTRA",
@@ -491,7 +490,7 @@
         "sma50": 378.1701,
         "sma200": 271.9335,
         "rsi14": 28.18,
-        "volume_ratio": 1.03
+        "volume_ratio": 1.031
       },
       {
         "symbol": "BMNR",
@@ -529,7 +528,7 @@
         "sma50": 23.0442,
         "sma200": 20.3644,
         "rsi14": 30.61,
-        "volume_ratio": 0.99
+        "volume_ratio": 0.998
       },
       {
         "symbol": "NEE",
@@ -567,7 +566,7 @@
         "sma50": 80.858,
         "sma200": 87.3469,
         "rsi14": 54.04,
-        "volume_ratio": 0.814
+        "volume_ratio": 0.815
       },
       {
         "symbol": "NU",
@@ -605,7 +604,7 @@
         "sma50": 13.6438,
         "sma200": 14.1199,
         "rsi14": 44.9,
-        "volume_ratio": 0.561
+        "volume_ratio": 0.562
       },
       {
         "symbol": "ALAB",
@@ -643,7 +642,7 @@
         "sma50": 290.5596,
         "sma200": 258.0182,
         "rsi14": 38.95,
-        "volume_ratio": 1.005
+        "volume_ratio": 1.023
       },
       {
         "symbol": "VRT",
@@ -681,7 +680,7 @@
         "sma50": 227.463,
         "sma200": 271.5923,
         "rsi14": 41.72,
-        "volume_ratio": 0.664
+        "volume_ratio": 0.672
       },
       {
         "symbol": "NVTS",
@@ -719,7 +718,7 @@
         "sma50": 10.1481,
         "sma200": 13.2554,
         "rsi14": 39.1,
-        "volume_ratio": 0.892
+        "volume_ratio": 0.912
       },
       {
         "symbol": "QBTS",
@@ -757,7 +756,7 @@
         "sma50": 13.5899,
         "sma200": 18.3738,
         "rsi14": 29.37,
-        "volume_ratio": 1.201
+        "volume_ratio": 1.209
       },
       {
         "symbol": "SMR",
@@ -795,7 +794,7 @@
         "sma50": 6.7634,
         "sma200": 9.9974,
         "rsi14": 29.9,
-        "volume_ratio": 1.073
+        "volume_ratio": 1.077
       },
       {
         "symbol": "COHR",
@@ -833,7 +832,7 @@
         "sma50": 261.8764,
         "sma200": 296.712,
         "rsi14": 44.54,
-        "volume_ratio": 1.081
+        "volume_ratio": 1.104
       },
       {
         "symbol": "CRDO",
@@ -871,9 +870,9 @@
         "sma50": 170.4083,
         "sma200": 180.8582,
         "rsi14": 38.81,
-        "volume_ratio": 0.757
+        "volume_ratio": 0.77
       }
     ]
   },
-  "generatedAt": "2026-11-18T08:35:05+09:00"
+  "generatedAt": "2026-11-18T13:38:40+09:00"
 }
