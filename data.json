@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-21",
+  "asOf": "2026-11-22",
   "note_freshness": "페이지 생성 시각과 지표별 기준일은 다르다. 국내 수급은 '수급 기준일'(완료 거래일, 연도 포함)을 따로 표시하며, 수집 실패 시 이전 값을 지연/실패로 표시한다. 출처: 국내 가격·수급 토스증권 Open API, 삼성전자 PBR Valueline, 기준금리 한국은행.",
   "us": {
     "trend": {
@@ -92,7 +92,7 @@
       "i5_jo": -0.4197,
       "unit": "KRW; 집계는 조원(1e12)",
       "source": "toss-openapi:/api/v1/market-indicators/KOSPI/investor-trading",
-      "observed_at": "2026-11-21T23:55:05+09:00",
+      "observed_at": "2026-11-22T08:35:06+09:00",
       "collect_status": "ok",
       "window_validation": "kospi_candles",
       "validated_trading_dates": [
@@ -117,27 +117,27 @@
         "2026-10-27",
         "2026-10-26"
       ],
-      "last_success_at": "2026-11-21T23:55:05+09:00",
-      "last_attempt_at": "2026-11-21T23:55:05+09:00"
+      "last_success_at": "2026-11-22T08:35:06+09:00",
+      "last_attempt_at": "2026-11-22T08:35:06+09:00"
     },
     "fx": {
       "num": 1348,
       "val": "~1,348원 · 안정",
-      "src_date": "11-21",
+      "src_date": "11-22",
       "auto": true,
       "tone": "green",
-      "note": "validFrom 2026-11-21T23:54:24.000+09:00"
+      "note": "validFrom 2026-11-22T08:34:24.000+09:00"
     },
     "bok": {
       "num": 3.0,
       "val": "3.00% (마지막 변경 2026-08-27)",
       "src_date": "08-27",
       "rate_change_date": "2026-08-27",
-      "observed_at": "2026-11-21T23:55:07+09:00",
+      "observed_at": "2026-11-22T08:35:08+09:00",
       "auto": true,
       "tone": "red",
       "tone_basis": "last_rate_change",
-      "note": "한국은행 기준금리 추이표: 마지막 변경 2026-08-27, 2.75% → 3.00% (0.25%p 인상). 최근 금통위 결정일·동결 여부를 뜻하지 않음. 조회 2026-11-21T23:55:07+09:00",
+      "note": "한국은행 기준금리 추이표: 마지막 변경 2026-08-27, 2.75% → 3.00% (0.25%p 인상). 최근 금통위 결정일·동결 여부를 뜻하지 않음. 조회 2026-11-22T08:35:08+09:00",
       "source": "BOK",
       "source_url": "https://www.bok.or.kr/portal/singl/baseRate/list.do?menuNo=200656"
     },
@@ -875,5 +875,5 @@
       }
     ]
   },
-  "generatedAt": "2026-11-21T23:55:07+09:00"
+  "generatedAt": "2026-11-22T08:35:08+09:00"
 }
