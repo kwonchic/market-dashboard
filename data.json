@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-22",
+  "asOf": "2026-11-23",
   "note_freshness": "페이지 생성 시각과 지표별 기준일은 다르다. 국내 수급은 '수급 기준일'(완료 거래일, 연도 포함)을 따로 표시하며, 수집 실패 시 이전 값을 지연/실패로 표시한다. 출처: 국내 가격·수급 토스증권 Open API, 삼성전자 PBR Valueline, 기준금리 한국은행.",
   "us": {
     "trend": {
@@ -22,7 +22,7 @@
     "cape": {
       "num": 36.44,
       "val": "보통 · CAPE 36.4",
-      "src_date": "11-21",
+      "src_date": "11-23",
       "auto": true
     },
     "hy": {
@@ -121,12 +121,11 @@
       "last_attempt_at": "2026-11-22T23:55:04+09:00"
     },
     "fx": {
-      "num": 1348,
-      "val": "~1,348원 · 안정",
-      "src_date": "11-22",
+      "num": 1343,
+      "val": "~1,343원 · 안정",
+      "src_date": "11-23",
       "auto": true,
-      "tone": "green",
-      "note": "validFrom 2026-11-22T23:54:24.000+09:00"
+      "tone": "green"
     },
     "bok": {
       "num": 3.0,
@@ -301,7 +300,7 @@
         "sma50": 341.8072,
         "sma200": 303.2406,
         "rsi14": 46.45,
-        "volume_ratio": 1.666
+        "volume_ratio": 1.687
       },
       {
         "symbol": "FLNC",
@@ -339,7 +338,7 @@
         "sma50": 6.3842,
         "sma200": 13.7471,
         "rsi14": 24.96,
-        "volume_ratio": 1.923
+        "volume_ratio": 1.936
       },
       {
         "symbol": "CPER",
@@ -377,7 +376,7 @@
         "sma50": 38.8762,
         "sma200": 37.9297,
         "rsi14": 20.09,
-        "volume_ratio": 1.731
+        "volume_ratio": 1.734
       },
       {
         "symbol": "CRCL",
@@ -415,7 +414,7 @@
         "sma50": 78.535,
         "sma200": 85.7767,
         "rsi14": 21.21,
-        "volume_ratio": 1.442
+        "volume_ratio": 1.47
       },
       {
         "symbol": "SKHY",
@@ -453,7 +452,7 @@
         "sma50": 157.0134,
         "sma200": null,
         "rsi14": 30.36,
-        "volume_ratio": 1.598
+        "volume_ratio": 1.684
       },
       {
         "symbol": "NTRA",
@@ -491,7 +490,7 @@
         "sma50": 375.5189,
         "sma200": 273.0458,
         "rsi14": 26.15,
-        "volume_ratio": 0.589
+        "volume_ratio": 0.594
       },
       {
         "symbol": "BMNR",
@@ -529,7 +528,7 @@
         "sma50": 22.4458,
         "sma200": 20.2817,
         "rsi14": 23.8,
-        "volume_ratio": 1.813
+        "volume_ratio": 1.839
       },
       {
         "symbol": "NEE",
@@ -567,7 +566,7 @@
         "sma50": 80.9504,
         "sma200": 87.267,
         "rsi14": 49.06,
-        "volume_ratio": 1.101
+        "volume_ratio": 1.116
       },
       {
         "symbol": "NU",
@@ -605,7 +604,7 @@
         "sma50": 13.4544,
         "sma200": 14.036,
         "rsi14": 37.29,
-        "volume_ratio": 0.758
+        "volume_ratio": 0.76
       },
       {
         "symbol": "ALAB",
@@ -616,7 +615,7 @@
         "currency": "USD",
         "points": 251,
         "quality": "ok",
-        "score": 12,
+        "score": 8,
         "label": "주의",
         "reasons": [
           {
@@ -643,7 +642,7 @@
         "sma50": 285.2078,
         "sma200": 258.8317,
         "rsi14": 33.04,
-        "volume_ratio": 1.493
+        "volume_ratio": 1.517
       },
       {
         "symbol": "VRT",
@@ -681,7 +680,7 @@
         "sma50": 223.0156,
         "sma200": 271.5685,
         "rsi14": 35.14,
-        "volume_ratio": 1.415
+        "volume_ratio": 1.421
       },
       {
         "symbol": "NVTS",
@@ -719,7 +718,7 @@
         "sma50": 9.8715,
         "sma200": 13.2348,
         "rsi14": 31.82,
-        "volume_ratio": 1.29
+        "volume_ratio": 1.3
       },
       {
         "symbol": "QBTS",
@@ -757,7 +756,7 @@
         "sma50": 13.0087,
         "sma200": 18.1878,
         "rsi14": 24.06,
-        "volume_ratio": 1.448
+        "volume_ratio": 1.487
       },
       {
         "symbol": "SMR",
@@ -795,7 +794,7 @@
         "sma50": 6.3924,
         "sma200": 9.8082,
         "rsi14": 24.45,
-        "volume_ratio": 1.085
+        "volume_ratio": 1.091
       },
       {
         "symbol": "COHR",
@@ -833,7 +832,7 @@
         "sma50": 256.136,
         "sma200": 296.5399,
         "rsi14": 38.92,
-        "volume_ratio": 1.405
+        "volume_ratio": 1.419
       },
       {
         "symbol": "CRDO",
@@ -871,9 +870,9 @@
         "sma50": 167.3959,
         "sma200": 181.0294,
         "rsi14": 31.61,
-        "volume_ratio": 1.583
+        "volume_ratio": 1.596
       }
     ]
   },
-  "generatedAt": "2026-11-22T23:55:06+09:00"
+  "generatedAt": "2026-11-23T04:53:56+09:00"
 }
