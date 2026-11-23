@@ -121,12 +121,11 @@
       "last_attempt_at": "2026-11-23T08:35:06+09:00"
     },
     "fx": {
-      "num": 1345,
-      "val": "~1,345원 · 안정",
+      "num": 1344,
+      "val": "~1,344원 · 안정",
       "src_date": "11-23",
       "auto": true,
-      "tone": "green",
-      "note": "validFrom 2026-11-23T08:34:04.000+09:00"
+      "tone": "green"
     },
     "bok": {
       "num": 3.0,
@@ -196,7 +195,7 @@
         "error": null,
         "src_date": "2026-11-20",
         "currency": "KRW",
-        "points": 245,
+        "points": 243,
         "quality": "ok",
         "score": 12,
         "label": "주의",
@@ -234,7 +233,7 @@
         "error": null,
         "src_date": "2026-11-20",
         "currency": "KRW",
-        "points": 245,
+        "points": 243,
         "quality": "ok",
         "score": 14,
         "label": "주의",
@@ -875,5 +874,5 @@
       }
     ]
   },
-  "generatedAt": "2026-11-23T08:35:08+09:00"
+  "generatedAt": "2026-11-23T12:54:03+09:00"
 }
