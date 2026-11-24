@@ -8,16 +8,16 @@
       "src_date": "11-24",
       "auto": false,
       "tone": "red",
-      "note": "S&P 7,204 / 50일선 7,610 / 200일선 7,351 · 63일 고점대비 -7.9% · 20일 -6.7%",
+      "note": "S&P 7,201 / 50일선 7,610 / 200일선 7,351 · 63일 고점대비 -7.9% · 20일 -6.8%",
       "above20": false,
       "above50": false,
       "above200": false,
       "ma200_up": true,
       "golden": true,
-      "dd63": -0.0787,
-      "reb63": 0.0424,
-      "dd252": -0.0787,
-      "r20": -0.0672
+      "dd63": -0.079,
+      "reb63": 0.0421,
+      "dd252": -0.079,
+      "r20": -0.0675
     },
     "cape": {
       "num": 38.21,
@@ -38,16 +38,16 @@
       "auto": true
     },
     "vix": {
-      "num": 26.3,
+      "num": 26.4,
       "val": "26 · 경계",
       "src_date": "11-24",
       "auto": true,
       "vix_falling": false
     },
     "real_yield": {
-      "num": 2.77,
-      "val": "2.77% · 강한 부담",
-      "src_date": "11-20",
+      "num": 2.79,
+      "val": "2.79% · 강한 부담",
+      "src_date": "11-23",
       "auto": true
     }
   },
@@ -193,19 +193,475 @@
         "name": "삼성전자",
         "status": "ok",
         "error": null,
-        "src_date": "2026-11-23",
+        "src_date": "2026-11-24",
         "currency": "KRW",
-        "points": 244,
+        "points": 245,
+        "quality": "ok",
+        "score": 13,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-21.7%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-18.0%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -14.7%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-7.5%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 189400.0,
+        "ret_1d": 0.067042,
+        "ret_20d": -0.146847,
+        "sma20": 204660.0,
+        "sma50": 230914.0,
+        "sma200": 241848.25,
+        "rsi14": 40.36,
+        "volume_ratio": 0.919
+      },
+      {
+        "symbol": "000660.KS",
+        "name": "SK하이닉스",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "KRW",
+        "points": 245,
+        "quality": "ok",
+        "score": 13,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-24.4%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-20.8%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -13.6%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-7.7%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 1158000.0,
+        "ret_1d": 0.067281,
+        "ret_20d": -0.136465,
+        "sma20": 1254450.0,
+        "sma50": 1462860.0,
+        "sma200": 1532005.0,
+        "rsi14": 42.27,
+        "volume_ratio": 0.93
+      },
+      {
+        "symbol": "AAPL",
+        "name": "Apple",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 81,
+        "label": "우호",
+        "reasons": [
+          {
+            "text": "200일선 위 (+16.5%)",
+            "tone": "pos"
+          },
+          {
+            "text": "50일선 위 (+3.4%)",
+            "tone": "pos"
+          },
+          {
+            "text": "20일선 위 (+1.7%)",
+            "tone": "pos"
+          },
+          {
+            "text": "20일선이 50일선 위",
+            "tone": "pos"
+          }
+        ],
+        "close": 354.07,
+        "ret_1d": 0.014295,
+        "ret_20d": 0.020081,
+        "sma20": 348.084,
+        "sma50": 342.5818,
+        "sma200": 303.9927,
+        "rsi14": 56.71,
+        "volume_ratio": 0.796
+      },
+      {
+        "symbol": "FLNC",
+        "name": "플루언스 에너지",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 16,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-69.8%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-33.5%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -31.8%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-15.9%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 4.1,
+        "ret_1d": 0.078947,
+        "ret_20d": -0.317804,
+        "sma20": 4.8765,
+        "sma50": 6.168,
+        "sma200": 13.5924,
+        "rsi14": 36.33,
+        "volume_ratio": 5.142
+      },
+      {
+        "symbol": "CPER",
+        "name": "CPER",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 16,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-14.2%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-15.9%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -18.9%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-11.8%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 32.5,
+        "ret_1d": -0.038746,
+        "ret_20d": -0.188514,
+        "sma20": 36.8665,
+        "sma50": 38.6638,
+        "sma200": 37.8962,
+        "rsi14": 24.48,
+        "volume_ratio": 1.187
+      },
+      {
+        "symbol": "CRCL",
+        "name": "써클 인터넷 그룹",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 16,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-44.3%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-37.9%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -41.5%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-25.7%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 47.72,
+        "ret_1d": -0.07051,
+        "ret_20d": -0.415053,
+        "sma20": 64.237,
+        "sma50": 76.8418,
+        "sma200": 85.6863,
+        "rsi14": 26.23,
+        "volume_ratio": 1.104
+      },
+      {
+        "symbol": "SKHY",
+        "name": "SK하이닉스 ADR",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 97,
+        "quality": "partial",
+        "score": 22,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "일부 지표 누락 · 중립 처리",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-27.6%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -23.0%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-16.1%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 111.98,
+        "ret_1d": -0.09897,
+        "ret_20d": -0.229637,
+        "sma20": 133.5445,
+        "sma50": 154.7294,
+        "sma200": null,
+        "rsi14": 38.97,
+        "volume_ratio": 0.829
+      },
+      {
+        "symbol": "NTRA",
+        "name": "나테라",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 32,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 위 (+9.1%)",
+            "tone": "pos"
+          },
+          {
+            "text": "50일선 아래 (-20.0%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -27.3%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-11.1%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 298.83,
+        "ret_1d": 0.022025,
+        "ret_20d": -0.272601,
+        "sma20": 336.097,
+        "sma50": 373.4919,
+        "sma200": 273.9338,
+        "rsi14": 37.47,
+        "volume_ratio": 0.981
+      },
+      {
+        "symbol": "BMNR",
+        "name": "비트마인 이머션 테크놀로지스",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
         "quality": "ok",
         "score": 12,
         "label": "주의",
         "reasons": [
           {
-            "text": "200일선 아래 (-26.6%)",
+            "text": "200일선 아래 (-34.8%)",
             "tone": "neg"
           },
           {
-            "text": "50일선 아래 (-23.7%)",
+            "text": "50일선 아래 (-40.1%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -39.0%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-26.5%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 13.18,
+        "ret_1d": -0.085992,
+        "ret_20d": -0.390379,
+        "sma20": 17.9325,
+        "sma50": 22.0106,
+        "sma200": 20.2101,
+        "rsi14": 29.19,
+        "volume_ratio": 1.644
+      },
+      {
+        "symbol": "NEE",
+        "name": "넥스트에라 에너지",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 49,
+        "label": "관망",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-3.0%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 위 (+4.3%)",
+            "tone": "pos"
+          },
+          {
+            "text": "20일선 아래 (-0.5%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선이 50일선 위",
+            "tone": "pos"
+          }
+        ],
+        "close": 84.58,
+        "ret_1d": 0.007265,
+        "ret_20d": 0.026207,
+        "sma20": 84.987,
+        "sma50": 81.0674,
+        "sma200": 87.215,
+        "rsi14": 54.41,
+        "volume_ratio": 0.596
+      },
+      {
+        "symbol": "NU",
+        "name": "누 홀딩스",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 18,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-15.2%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-11.2%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-1.3%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선이 50일선 아래",
+            "tone": "neg"
+          }
+        ],
+        "close": 11.86,
+        "ret_1d": 0.005085,
+        "ret_20d": -0.043548,
+        "sma20": 12.0135,
+        "sma50": 13.3556,
+        "sma200": 13.9796,
+        "rsi14": 43.39,
+        "volume_ratio": 0.589
+      },
+      {
+        "symbol": "ALAB",
+        "name": "아스테라 랩스",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 12,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-26.2%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-32.5%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -33.3%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-14.1%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 191.3,
+        "ret_1d": -0.138754,
+        "ret_20d": -0.332729,
+        "sma20": 222.6355,
+        "sma50": 283.2846,
+        "sma200": 259.1112,
+        "rsi14": 39.76,
+        "volume_ratio": 1.146
+      },
+      {
+        "symbol": "VRT",
+        "name": "버티브 홀딩스",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 12,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-35.9%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-21.3%)",
             "tone": "neg"
           },
           {
@@ -217,515 +673,21 @@
             "tone": "neg"
           }
         ],
-        "close": 177500.0,
-        "ret_1d": -0.030584,
-        "ret_20d": -0.166667,
-        "sma20": 206290.0,
-        "sma50": 232516.0,
-        "sma200": 241713.25,
-        "rsi14": 32.65,
-        "volume_ratio": 1.078
-      },
-      {
-        "symbol": "000660.KS",
-        "name": "SK하이닉스",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "KRW",
-        "points": 244,
-        "quality": "ok",
-        "score": 13,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-29.1%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-26.5%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -14.9%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-14.1%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 1085000.0,
-        "ret_1d": -0.025157,
-        "ret_20d": -0.14902,
-        "sma20": 1263600.0,
-        "sma50": 1476820.0,
-        "sma200": 1530420.0,
-        "rsi14": 36.51,
-        "volume_ratio": 1.036
-      },
-      {
-        "symbol": "AAPL",
-        "name": "Apple",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 81,
-        "label": "우호",
-        "reasons": [
-          {
-            "text": "200일선 위 (+15.0%)",
-            "tone": "pos"
-          },
-          {
-            "text": "50일선 위 (+2.0%)",
-            "tone": "pos"
-          },
-          {
-            "text": "20일선 위 (+0.4%)",
-            "tone": "pos"
-          },
-          {
-            "text": "20일선이 50일선 위",
-            "tone": "pos"
-          }
-        ],
-        "close": 349.08,
-        "ret_1d": 0.019033,
-        "ret_20d": 0.015033,
-        "sma20": 347.7355,
-        "sma50": 342.1272,
-        "sma200": 303.5954,
-        "rsi14": 52.61,
-        "volume_ratio": 1.176
-      },
-      {
-        "symbol": "FLNC",
-        "name": "플루언스 에너지",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 12,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-72.2%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-39.4%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -30.9%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-23.6%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 3.8,
-        "ret_1d": 0.098266,
-        "ret_20d": -0.309091,
-        "sma20": 4.972,
-        "sma50": 6.272,
-        "sma200": 13.6689,
-        "rsi14": 31.26,
-        "volume_ratio": 1.46
-      },
-      {
-        "symbol": "CPER",
-        "name": "CPER",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 17,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-10.8%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-12.8%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -14.2%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-9.2%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 33.81,
-        "ret_1d": 0.027035,
-        "ret_20d": -0.14166,
-        "sma20": 37.244,
-        "sma50": 38.7872,
-        "sma200": 37.9175,
-        "rsi14": 28.63,
-        "volume_ratio": 1.068
-      },
-      {
-        "symbol": "CRCL",
-        "name": "써클 인터넷 그룹",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 16,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-40.1%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-33.9%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -35.7%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-22.1%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 51.34,
-        "ret_1d": 0.080615,
-        "ret_20d": -0.356964,
-        "sma20": 65.93,
-        "sma50": 77.6134,
-        "sma200": 85.7482,
-        "rsi14": 28.8,
-        "volume_ratio": 1.156
-      },
-      {
-        "symbol": "SKHY",
-        "name": "SK하이닉스 ADR",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 96,
-        "quality": "partial",
-        "score": 24,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "일부 지표 누락 · 중립 처리",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-20.3%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -12.9%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-8.1%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 124.28,
-        "ret_1d": 0.199961,
-        "ret_20d": -0.128593,
-        "sma20": 135.2135,
-        "sma50": 155.9864,
-        "sma200": null,
-        "rsi14": 43.78,
-        "volume_ratio": 1.435
-      },
-      {
-        "symbol": "NTRA",
-        "name": "나테라",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 32,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 위 (+6.9%)",
-            "tone": "pos"
-          },
-          {
-            "text": "50일선 아래 (-21.9%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -27.8%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-14.4%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 292.39,
-        "ret_1d": 0.069459,
-        "ret_20d": -0.277871,
-        "sma20": 341.6965,
-        "sma50": 374.5309,
-        "sma200": 273.4925,
-        "rsi14": 34.8,
-        "volume_ratio": 0.707
-      },
-      {
-        "symbol": "BMNR",
-        "name": "비트마인 이머션 테크놀로지스",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 12,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-28.8%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-35.1%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -31.2%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-21.4%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 14.42,
-        "ret_1d": 0.11094,
-        "ret_20d": -0.311695,
-        "sma20": 18.3545,
-        "sma50": 22.219,
-        "sma200": 20.2515,
-        "rsi14": 32.17,
-        "volume_ratio": 1.181
-      },
-      {
-        "symbol": "NEE",
-        "name": "넥스트에라 에너지",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 49,
-        "label": "관망",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-3.7%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 위 (+3.7%)",
-            "tone": "pos"
-          },
-          {
-            "text": "20일선 아래 (-1.1%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선이 50일선 위",
-            "tone": "pos"
-          }
-        ],
-        "close": 83.97,
-        "ret_1d": 0.006231,
-        "ret_20d": 0.023525,
-        "sma20": 84.879,
-        "sma50": 80.9972,
-        "sma200": 87.2395,
-        "rsi14": 51.57,
-        "volume_ratio": 0.968
-      },
-      {
-        "symbol": "NU",
-        "name": "누 홀딩스",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 17,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-15.8%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-12.0%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-2.0%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선이 50일선 아래",
-            "tone": "neg"
-          }
-        ],
-        "close": 11.8,
-        "ret_1d": 0.047027,
-        "ret_20d": -0.062748,
-        "sma20": 12.0405,
-        "sma50": 13.4022,
-        "sma200": 14.008,
-        "rsi14": 42.78,
-        "volume_ratio": 0.616
-      },
-      {
-        "symbol": "ALAB",
-        "name": "아스테라 랩스",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 17,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-14.3%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-21.9%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -14.4%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-2.3%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 222.12,
-        "ret_1d": 0.231605,
-        "ret_20d": -0.144079,
-        "sma20": 227.405,
-        "sma50": 284.5094,
-        "sma200": 259.093,
-        "rsi14": 45.77,
-        "volume_ratio": 1.539
-      },
-      {
-        "symbol": "VRT",
-        "name": "버티브 홀딩스",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 17,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-31.4%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-16.1%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-8.6%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선이 50일선 아래",
-            "tone": "neg"
-          }
-        ],
-        "close": 186.35,
-        "ret_1d": 0.12097,
-        "ret_20d": -0.067224,
-        "sma20": 203.964,
-        "sma50": 221.9948,
-        "sma200": 271.5224,
-        "rsi14": 43.65,
-        "volume_ratio": 1.119
+        "close": 173.82,
+        "ret_1d": -0.067239,
+        "ret_20d": -0.166571,
+        "sma20": 202.227,
+        "sma50": 220.779,
+        "sma200": 271.3815,
+        "rsi14": 40.12,
+        "volume_ratio": 0.681
       },
       {
         "symbol": "NVTS",
         "name": "나비타스 세미컨덕터",
         "status": "ok",
         "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 14,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-44.6%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-25.2%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일 수익률 -12.7%",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 아래 (-13.6%)",
-            "tone": "neg"
-          }
-        ],
-        "close": 7.33,
-        "ret_1d": 0.205592,
-        "ret_20d": -0.127381,
-        "sma20": 8.479,
-        "sma50": 9.8003,
-        "sma200": 13.2271,
-        "rsi14": 41.75,
-        "volume_ratio": 1.199
-      },
-      {
-        "symbol": "QBTS",
-        "name": "디웨이브 퀀텀",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
+        "src_date": "2026-11-24",
         "currency": "USD",
         "points": 251,
         "quality": "ok",
@@ -733,37 +695,37 @@
         "label": "주의",
         "reasons": [
           {
-            "text": "200일선 아래 (-59.7%)",
+            "text": "200일선 아래 (-50.7%)",
             "tone": "neg"
           },
           {
-            "text": "50일선 아래 (-43.0%)",
+            "text": "50일선 아래 (-33.0%)",
             "tone": "neg"
           },
           {
-            "text": "20일 수익률 -36.7%",
+            "text": "20일 수익률 -30.4%",
             "tone": "neg"
           },
           {
-            "text": "20일선 아래 (-24.7%)",
+            "text": "20일선 아래 (-21.9%)",
             "tone": "neg"
           }
         ],
-        "close": 7.31,
-        "ret_1d": 0.121166,
-        "ret_20d": -0.366551,
-        "sma20": 9.713,
-        "sma50": 12.8183,
-        "sma200": 18.1208,
-        "rsi14": 31.21,
-        "volume_ratio": 1.215
+        "close": 6.51,
+        "ret_1d": -0.111869,
+        "ret_20d": -0.303743,
+        "sma20": 8.337,
+        "sma50": 9.7143,
+        "sma200": 13.2136,
+        "rsi14": 37.86,
+        "volume_ratio": 0.92
       },
       {
-        "symbol": "SMR",
-        "name": "뉴스케일파워",
+        "symbol": "QBTS",
+        "name": "디웨이브 퀀텀",
         "status": "ok",
         "error": null,
-        "src_date": "2026-11-23",
+        "src_date": "2026-11-24",
         "currency": "USD",
         "points": 251,
         "quality": "ok",
@@ -771,75 +733,75 @@
         "label": "주의",
         "reasons": [
           {
-            "text": "200일선 아래 (-63.8%)",
+            "text": "200일선 아래 (-62.7%)",
             "tone": "neg"
           },
           {
-            "text": "50일선 아래 (-43.9%)",
+            "text": "50일선 아래 (-46.6%)",
             "tone": "neg"
           },
           {
-            "text": "20일 수익률 -33.0%",
+            "text": "20일 수익률 -44.4%",
             "tone": "neg"
           },
           {
-            "text": "20일선 아래 (-26.9%)",
+            "text": "20일선 아래 (-28.6%)",
             "tone": "neg"
           }
         ],
-        "close": 3.53,
-        "ret_1d": 0.050595,
-        "ret_20d": -0.330171,
-        "sma20": 4.8275,
-        "sma50": 6.2928,
-        "sma200": 9.7382,
-        "rsi14": 27.89,
-        "volume_ratio": 0.781
+        "close": 6.74,
+        "ret_1d": -0.077975,
+        "ret_20d": -0.444353,
+        "sma20": 9.4435,
+        "sma50": 12.6249,
+        "sma200": 18.0484,
+        "rsi14": 29.08,
+        "volume_ratio": 0.893
+      },
+      {
+        "symbol": "SMR",
+        "name": "뉴스케일파워",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 16,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-65.9%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-46.7%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -42.1%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-29.9%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 3.3,
+        "ret_1d": -0.065156,
+        "ret_20d": -0.421053,
+        "sma20": 4.7075,
+        "sma50": 6.1902,
+        "sma200": 9.6663,
+        "rsi14": 26.16,
+        "volume_ratio": 0.855
       },
       {
         "symbol": "COHR",
         "name": "코히런트",
         "status": "ok",
         "error": null,
-        "src_date": "2026-11-23",
-        "currency": "USD",
-        "points": 251,
-        "quality": "ok",
-        "score": 31,
-        "label": "주의",
-        "reasons": [
-          {
-            "text": "200일선 아래 (-27.2%)",
-            "tone": "neg"
-          },
-          {
-            "text": "50일선 아래 (-15.4%)",
-            "tone": "neg"
-          },
-          {
-            "text": "20일선 위 (+1.4%)",
-            "tone": "pos"
-          },
-          {
-            "text": "20일선이 50일선 아래",
-            "tone": "neg"
-          }
-        ],
-        "close": 215.81,
-        "ret_1d": 0.152708,
-        "ret_20d": -0.025688,
-        "sma20": 212.8855,
-        "sma50": 255.1222,
-        "sma200": 296.4806,
-        "rsi14": 47.69,
-        "volume_ratio": 1.114
-      },
-      {
-        "symbol": "CRDO",
-        "name": "크레도 테크놀로지 그룹 홀딩",
-        "status": "ok",
-        "error": null,
-        "src_date": "2026-11-23",
+        "src_date": "2026-11-24",
         "currency": "USD",
         "points": 251,
         "quality": "ok",
@@ -847,32 +809,70 @@
         "label": "주의",
         "reasons": [
           {
-            "text": "200일선 아래 (-32.4%)",
+            "text": "200일선 아래 (-33.8%)",
             "tone": "neg"
           },
           {
-            "text": "50일선 아래 (-26.6%)",
+            "text": "50일선 아래 (-22.6%)",
             "tone": "neg"
           },
           {
-            "text": "20일 수익률 -19.0%",
+            "text": "20일 수익률 -16.8%",
             "tone": "neg"
           },
           {
-            "text": "20일선 아래 (-9.3%)",
+            "text": "20일선 아래 (-7.0%)",
             "tone": "neg"
           }
         ],
-        "close": 122.46,
-        "ret_1d": 0.226317,
-        "ret_20d": -0.189811,
-        "sma20": 135.0385,
-        "sma50": 166.8433,
-        "sma200": 181.0847,
-        "rsi14": 42.6,
-        "volume_ratio": 1.292
+        "close": 196.24,
+        "ret_1d": -0.090682,
+        "ret_20d": -0.167734,
+        "sma20": 210.908,
+        "sma50": 253.6236,
+        "sma200": 296.2495,
+        "rsi14": 43.12,
+        "volume_ratio": 0.656
+      },
+      {
+        "symbol": "CRDO",
+        "name": "크레도 테크놀로지 그룹 홀딩",
+        "status": "ok",
+        "error": null,
+        "src_date": "2026-11-24",
+        "currency": "USD",
+        "points": 251,
+        "quality": "ok",
+        "score": 12,
+        "label": "주의",
+        "reasons": [
+          {
+            "text": "200일선 아래 (-41.2%)",
+            "tone": "neg"
+          },
+          {
+            "text": "50일선 아래 (-35.9%)",
+            "tone": "neg"
+          },
+          {
+            "text": "20일 수익률 -36.4%",
+            "tone": "neg"
+          },
+          {
+            "text": "20일선 아래 (-19.3%)",
+            "tone": "neg"
+          }
+        ],
+        "close": 106.46,
+        "ret_1d": -0.130655,
+        "ret_20d": -0.364152,
+        "sma20": 131.99,
+        "sma50": 165.9647,
+        "sma200": 181.0,
+        "rsi14": 37.95,
+        "volume_ratio": 0.971
       }
     ]
   },
-  "generatedAt": "2026-11-25T03:43:15+09:00"
+  "generatedAt": "2026-11-25T07:39:34+09:00"
 }
