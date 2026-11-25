@@ -121,8 +121,8 @@
       "last_attempt_at": "2026-11-25T08:35:05+09:00"
     },
     "fx": {
-      "num": 1344,
-      "val": "~1,344원 · 안정",
+      "num": 1343,
+      "val": "~1,343원 · 안정",
       "src_date": "11-25",
       "auto": true,
       "tone": "green"
@@ -195,7 +195,7 @@
         "error": null,
         "src_date": "2026-11-24",
         "currency": "KRW",
-        "points": 245,
+        "points": 244,
         "quality": "ok",
         "score": 13,
         "label": "주의",
@@ -233,7 +233,7 @@
         "error": null,
         "src_date": "2026-11-24",
         "currency": "KRW",
-        "points": 245,
+        "points": 244,
         "quality": "ok",
         "score": 13,
         "label": "주의",
@@ -300,7 +300,7 @@
         "sma50": 342.5818,
         "sma200": 303.9927,
         "rsi14": 56.71,
-        "volume_ratio": 0.796
+        "volume_ratio": 0.815
       },
       {
         "symbol": "FLNC",
@@ -338,7 +338,7 @@
         "sma50": 6.168,
         "sma200": 13.5924,
         "rsi14": 36.33,
-        "volume_ratio": 5.142
+        "volume_ratio": 5.147
       },
       {
         "symbol": "CPER",
@@ -376,7 +376,7 @@
         "sma50": 38.6638,
         "sma200": 37.8962,
         "rsi14": 24.48,
-        "volume_ratio": 1.187
+        "volume_ratio": 1.188
       },
       {
         "symbol": "CRCL",
@@ -414,7 +414,7 @@
         "sma50": 76.8418,
         "sma200": 85.6863,
         "rsi14": 26.23,
-        "volume_ratio": 1.104
+        "volume_ratio": 1.108
       },
       {
         "symbol": "SKHY",
@@ -452,7 +452,7 @@
         "sma50": 154.7294,
         "sma200": null,
         "rsi14": 38.97,
-        "volume_ratio": 0.829
+        "volume_ratio": 0.833
       },
       {
         "symbol": "NTRA",
@@ -528,7 +528,7 @@
         "sma50": 22.0106,
         "sma200": 20.2101,
         "rsi14": 29.19,
-        "volume_ratio": 1.644
+        "volume_ratio": 1.648
       },
       {
         "symbol": "NEE",
@@ -642,7 +642,7 @@
         "sma50": 283.2846,
         "sma200": 259.1112,
         "rsi14": 39.76,
-        "volume_ratio": 1.146
+        "volume_ratio": 1.148
       },
       {
         "symbol": "VRT",
@@ -680,7 +680,7 @@
         "sma50": 220.779,
         "sma200": 271.3815,
         "rsi14": 40.12,
-        "volume_ratio": 0.681
+        "volume_ratio": 0.682
       },
       {
         "symbol": "NVTS",
@@ -718,7 +718,7 @@
         "sma50": 9.7143,
         "sma200": 13.2136,
         "rsi14": 37.86,
-        "volume_ratio": 0.92
+        "volume_ratio": 0.921
       },
       {
         "symbol": "QBTS",
@@ -756,7 +756,7 @@
         "sma50": 12.6249,
         "sma200": 18.0484,
         "rsi14": 29.08,
-        "volume_ratio": 0.893
+        "volume_ratio": 0.894
       },
       {
         "symbol": "SMR",
@@ -794,7 +794,7 @@
         "sma50": 6.1902,
         "sma200": 9.6663,
         "rsi14": 26.16,
-        "volume_ratio": 0.855
+        "volume_ratio": 0.856
       },
       {
         "symbol": "COHR",
@@ -832,7 +832,7 @@
         "sma50": 253.6236,
         "sma200": 296.2495,
         "rsi14": 43.12,
-        "volume_ratio": 0.656
+        "volume_ratio": 0.659
       },
       {
         "symbol": "CRDO",
@@ -870,9 +870,9 @@
         "sma50": 165.9647,
         "sma200": 181.0,
         "rsi14": 37.95,
-        "volume_ratio": 0.971
+        "volume_ratio": 0.975
       }
     ]
   },
-  "generatedAt": "2026-11-25T08:39:06+09:00"
+  "generatedAt": "2026-11-25T14:35:26+09:00"
 }
