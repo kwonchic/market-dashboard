@@ -193,76 +193,76 @@
         "name": "삼성전자",
         "status": "ok",
         "error": null,
-        "src_date": "2026-11-26",
+        "src_date": "2026-11-27",
         "currency": "KRW",
-        "points": 244,
+        "points": 245,
         "quality": "ok",
         "score": 12,
         "label": "주의",
         "reasons": [
           {
-            "text": "200일선 아래 (-29.2%)",
+            "text": "200일선 아래 (-26.0%)",
             "tone": "neg"
           },
           {
-            "text": "50일선 아래 (-24.6%)",
+            "text": "50일선 아래 (-20.7%)",
             "tone": "neg"
           },
           {
-            "text": "20일 수익률 -26.2%",
+            "text": "20일 수익률 -20.4%",
             "tone": "neg"
           },
           {
-            "text": "20일선 아래 (-13.5%)",
+            "text": "20일선 아래 (-8.5%)",
             "tone": "neg"
           }
         ],
-        "close": 171300.0,
-        "ret_1d": 0.003515,
-        "ret_20d": -0.261638,
-        "sma20": 198060.0,
-        "sma50": 227184.0,
-        "sma200": 241952.25,
-        "rsi14": 34.18,
-        "volume_ratio": 0.737
+        "close": 179100.0,
+        "ret_1d": 0.045534,
+        "ret_20d": -0.204,
+        "sma20": 195765.0,
+        "sma50": 225786.0,
+        "sma200": 242095.75,
+        "rsi14": 38.94,
+        "volume_ratio": 0.785
       },
       {
         "symbol": "000660.KS",
         "name": "SK하이닉스",
         "status": "ok",
         "error": null,
-        "src_date": "2026-11-26",
+        "src_date": "2026-11-27",
         "currency": "KRW",
-        "points": 244,
+        "points": 245,
         "quality": "ok",
         "score": 12,
         "label": "주의",
         "reasons": [
           {
-            "text": "200일선 아래 (-31.3%)",
+            "text": "200일선 아래 (-27.7%)",
             "tone": "neg"
           },
           {
-            "text": "50일선 아래 (-26.4%)",
+            "text": "50일선 아래 (-21.8%)",
             "tone": "neg"
           },
           {
-            "text": "20일 수익률 -31.0%",
+            "text": "20일 수익률 -21.7%",
             "tone": "neg"
           },
           {
-            "text": "20일선 아래 (-12.8%)",
+            "text": "20일선 아래 (-6.9%)",
             "tone": "neg"
           }
         ],
-        "close": 1053000.0,
-        "ret_1d": 0.02233,
-        "ret_20d": -0.309961,
-        "sma20": 1207950.0,
-        "sma50": 1431220.0,
-        "sma200": 1533570.0,
-        "rsi14": 37.84,
-        "volume_ratio": 0.908
+        "close": 1110000.0,
+        "ret_1d": 0.054131,
+        "ret_20d": -0.217207,
+        "sma20": 1192550.0,
+        "sma50": 1419480.0,
+        "sma200": 1534970.0,
+        "rsi14": 42.1,
+        "volume_ratio": 0.791
       },
       {
         "symbol": "AAPL",
@@ -300,7 +300,7 @@
         "sma50": 343.476,
         "sma200": 304.8174,
         "rsi14": 60.2,
-        "volume_ratio": 0.419
+        "volume_ratio": 0.44
       },
       {
         "symbol": "FLNC",
@@ -338,7 +338,7 @@
         "sma50": 6.032,
         "sma200": 13.4594,
         "rsi14": 50.96,
-        "volume_ratio": 1.024
+        "volume_ratio": 1.03
       },
       {
         "symbol": "CPER",
@@ -376,7 +376,7 @@
         "sma50": 38.4142,
         "sma200": 37.8594,
         "rsi14": 31.18,
-        "volume_ratio": 0.436
+        "volume_ratio": 0.438
       },
       {
         "symbol": "CRCL",
@@ -414,7 +414,7 @@
         "sma50": 75.4822,
         "sma200": 85.586,
         "rsi14": 29.32,
-        "volume_ratio": 0.598
+        "volume_ratio": 0.602
       },
       {
         "symbol": "SKHY",
@@ -452,7 +452,7 @@
         "sma50": 152.185,
         "sma200": null,
         "rsi14": 43.51,
-        "volume_ratio": 0.72
+        "volume_ratio": 0.726
       },
       {
         "symbol": "NTRA",
@@ -528,7 +528,7 @@
         "sma50": 21.623,
         "sma200": 20.1496,
         "rsi14": 33.13,
-        "volume_ratio": 0.585
+        "volume_ratio": 0.592
       },
       {
         "symbol": "NEE",
@@ -566,7 +566,7 @@
         "sma50": 81.2416,
         "sma200": 87.1559,
         "rsi14": 55.4,
-        "volume_ratio": 0.315
+        "volume_ratio": 0.326
       },
       {
         "symbol": "NU",
@@ -604,7 +604,7 @@
         "sma50": 13.308,
         "sma200": 13.931,
         "rsi14": 53.11,
-        "volume_ratio": 0.968
+        "volume_ratio": 0.971
       },
       {
         "symbol": "ALAB",
@@ -642,7 +642,7 @@
         "sma50": 279.9734,
         "sma200": 259.4642,
         "rsi14": 44.12,
-        "volume_ratio": 0.547
+        "volume_ratio": 0.548
       },
       {
         "symbol": "VRT",
@@ -680,7 +680,7 @@
         "sma50": 218.2026,
         "sma200": 270.9012,
         "rsi14": 42.29,
-        "volume_ratio": 0.441
+        "volume_ratio": 0.443
       },
       {
         "symbol": "NVTS",
@@ -718,7 +718,7 @@
         "sma50": 9.5631,
         "sma200": 13.1961,
         "rsi14": 43.31,
-        "volume_ratio": 0.533
+        "volume_ratio": 0.539
       },
       {
         "symbol": "QBTS",
@@ -756,7 +756,7 @@
         "sma50": 12.2373,
         "sma200": 17.9209,
         "rsi14": 36.34,
-        "volume_ratio": 0.837
+        "volume_ratio": 0.845
       },
       {
         "symbol": "SMR",
@@ -794,7 +794,7 @@
         "sma50": 5.978,
         "sma200": 9.5384,
         "rsi14": 30.71,
-        "volume_ratio": 0.351
+        "volume_ratio": 0.354
       },
       {
         "symbol": "COHR",
@@ -832,7 +832,7 @@
         "sma50": 250.305,
         "sma200": 296.0891,
         "rsi14": 50.81,
-        "volume_ratio": 0.659
+        "volume_ratio": 0.667
       },
       {
         "symbol": "CRDO",
@@ -870,9 +870,9 @@
         "sma50": 163.8172,
         "sma200": 180.7962,
         "rsi14": 42.11,
-        "volume_ratio": 0.557
+        "volume_ratio": 0.562
       }
     ]
   },
-  "generatedAt": "2026-11-28T06:30:20+09:00"
+  "generatedAt": "2026-11-28T07:58:54+09:00"
 }
