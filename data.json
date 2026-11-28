@@ -93,7 +93,7 @@
       "unit": "KRW; 집계는 조원(1e12)",
       "source": "toss-openapi:/api/v1/market-indicators/KOSPI/investor-trading",
       "observed_at": "2026-11-28T21:35:05+09:00",
-      "collect_status": "ok",
+      "collect_status": "failed",
       "window_validation": "kospi_candles",
       "validated_trading_dates": [
         "2026-11-27",
@@ -118,7 +118,8 @@
         "2026-11-02"
       ],
       "last_success_at": "2026-11-28T21:35:05+09:00",
-      "last_attempt_at": "2026-11-28T21:35:05+09:00"
+      "last_attempt_at": "2026-11-28T23:55:01+09:00",
+      "last_error": "request_failed /api/v1/market-indicators/KOSPI/investor-trading: {'status': 500, 'code': 'maintenance', 'requestId': '', 'message': '점검 중입니다. 잠시 후 다시 시도해 주세요.'}"
     },
     "fx": {
       "num": 1338,
@@ -133,11 +134,11 @@
       "val": "3.25% (마지막 변경 2026-11-26)",
       "src_date": "11-26",
       "rate_change_date": "2026-11-26",
-      "observed_at": "2026-11-28T21:35:06+09:00",
+      "observed_at": "2026-11-28T23:55:02+09:00",
       "auto": true,
       "tone": "red",
       "tone_basis": "last_rate_change",
-      "note": "한국은행 기준금리 추이표: 마지막 변경 2026-11-26, 3.00% → 3.25% (0.25%p 인상). 최근 금통위 결정일·동결 여부를 뜻하지 않음. 조회 2026-11-28T21:35:06+09:00",
+      "note": "한국은행 기준금리 추이표: 마지막 변경 2026-11-26, 3.00% → 3.25% (0.25%p 인상). 최근 금통위 결정일·동결 여부를 뜻하지 않음. 조회 2026-11-28T23:55:02+09:00",
       "source": "BOK",
       "source_url": "https://www.bok.or.kr/portal/singl/baseRate/list.do?menuNo=200656"
     },
@@ -875,5 +876,5 @@
       }
     ]
   },
-  "generatedAt": "2026-11-28T21:35:06+09:00"
+  "generatedAt": "2026-11-28T23:55:02+09:00"
 }
